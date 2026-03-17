@@ -1,0 +1,56 @@
+# ── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environment ──────────────────────────────
+venv/
+env/
+.venv/
+.env/
+
+# ── PyTorch model weights ────────────────────────────
+# Keep models/ folder but ignore large binary weights
+models/*.bin
+models/*.pt
+models/*.pth
+# To include a specific trained model, use:
+# !models/model.bin
+
+# ── SUMO output files ────────────────────────────────
+tripinfo.xml
+tripinfo_fixed.xml
+*.log
+
+# ── Generated data files ─────────────────────────────
+simple_traffic_metrics.csv
+results.json
+
+# ── Generated plots ──────────────────────────────────
+plots/*.png
+plots/*.jpg
+# Keep epoch data JSON (small, useful for website)
+!plots/epoch_data_*.json
+
+# ── IDE / Editor ─────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS files ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Windows setup artifacts ──────────────────────────
+*.bat

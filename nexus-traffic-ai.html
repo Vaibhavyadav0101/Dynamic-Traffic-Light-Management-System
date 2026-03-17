@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NEXUS TRAFFIC AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════
+   SHARED BASE
+═══════════════════════════════════════ */
+:root{
+  --neon:#00ffe7;--neon2:#ff2d78;--neon3:#ffe600;--neon4:#7b61ff;
+  --dark:#020810;--dark2:#050f1a;--dark3:#071525;
+  --glass:rgba(0,255,231,.04);--border:rgba(0,255,231,.13);
+  --text:#c8eaf5;--dim:#4a7a90;
+  --green:#00ff88;--red:#ff3b3b;--yellow:#ffe600;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;cursor:none}
+.cur{position:fixed;width:10px;height:10px;background:var(--neon);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--neon)}
+.cur-r{position:fixed;width:30px;height:30px;border:1px solid rgba(0,255,231,.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s ease-out}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,231,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,.022) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.055) 2px,rgba(0,0,0,.055) 4px);pointer-events:none;z-index:1000}
+
+/* ═══════════════════════════════════════
+   NAV + TAB BAR
+═══════════════════════════════════════ */
+nav{position:fixed;top:0;left:0;right:0;z-index:600;background:rgba(2,8,16,.97);border-bottom:1px solid var(--border);backdrop-filter:blur(14px)}
+.nav-top{display:flex;align-items:center;justify-content:space-between;padding:12px 36px}
+.nav-logo{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--neon);letter-spacing:3px;text-decoration:none;cursor:none}
+.nav-logo span{color:var(--neon2)}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);text-decoration:none;letter-spacing:2px;text-transform:uppercase;transition:color .2s;cursor:none}
+.nav-links a:hover{color:var(--neon)}
+.nav-status{font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--neon);letter-spacing:3px;display:flex;align-items:center;gap:8px}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:all .3s}
+.sdot.live{background:var(--neon2);box-shadow:0 0 8px var(--neon2);animation:blink 1s infinite}
+.sdot.done{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+/* Tab bar */
+.tab-bar{display:flex;border-top:1px solid var(--border)}
+.tab-btn{flex:1;font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:2px;padding:10px 20px;background:transparent;border:none;border-right:1px solid var(--border);color:var(--dim);cursor:none;transition:all .2s;position:relative;text-transform:uppercase}
+.tab-btn:last-child{border-right:none}
+.tab-btn::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--neon),var(--neon2));transform:scaleX(0);transition:transform .3s}
+.tab-btn.active{color:var(--neon);background:rgba(0,255,231,.04)}
+.tab-btn.active::after{transform:scaleX(1)}
+.tab-btn:hover:not(.active){color:var(--text);background:rgba(255,255,255,.02)}
+
+/* ═══════════════════════════════════════
+   PAGE SWITCHING
+═══════════════════════════════════════ */
+.page-wrap{padding-top:88px}
+.pg{display:none;animation:pgIn .35s ease}
+.pg.active{display:block}
+@keyframes pgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════
+   ── PAGE 1: OVERVIEW ──
+═══════════════════════════════════════ */
+#p-overview section{position:relative;z-index:1}
+
+/* HERO */
+#hero{position:relative;min-height:calc(100vh - 88px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none}
+.o1{width:500px;height:500px;background:var(--neon);top:-180px;left:-180px;opacity:.1}
+.o2{width:350px;height:350px;background:var(--neon2);top:15%;right:-120px;opacity:.1}
+.o3{width:280px;height:280px;background:var(--neon4);bottom:10%;left:25%;opacity:.07}
+.hero-badge{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:4px;color:var(--neon);border:1px solid var(--border);padding:6px 18px;margin-bottom:24px;background:var(--glass);animation:fadeUp .7s ease both}
+.hero-title{font-family:'Orbitron',monospace;font-size:clamp(2.2rem,7vw,6rem);font-weight:900;line-height:1;animation:fadeUp .8s .1s ease both}
+.hero-title .l1{display:block;color:#fff}
+.hero-title .l2{display:block;background:linear-gradient(90deg,var(--neon),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 28px rgba(0,255,231,.35))}
+.hero-sub{margin:22px auto 0;max-width:520px;font-size:1.05rem;color:var(--dim);line-height:1.75;animation:fadeUp .9s .2s ease both}
+.hero-cta{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap;justify-content:center;animation:fadeUp 1s .3s ease both}
+.btn-p{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;letter-spacing:2px;padding:13px 32px;border:none;background:linear-gradient(90deg,var(--neon),#00b8a9);color:var(--dark);cursor:none;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:filter .2s,transform .2s;text-decoration:none;display:inline-block}
+.btn-p:hover{filter:brightness(1.2);transform:translateY(-2px)}
+.btn-s{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;letter-spacing:2px;padding:12px 32px;background:transparent;border:1px solid var(--border);color:var(--neon);cursor:none;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background .2s,transform .2s;text-decoration:none;display:inline-block}
+.btn-s:hover{background:var(--glass);transform:translateY(-2px)}
+.hero-road{margin-top:44px;width:min(680px,90vw);animation:fadeUp 1s .45s ease both}
+.hero-road svg{width:100%;filter:drop-shadow(0 0 22px rgba(0,255,231,.18))}
+.stat-strip{display:flex;margin-top:36px;width:min(680px,90vw);border:1px solid var(--border);background:var(--glass);animation:fadeUp 1s .6s ease both}
+.ssc{flex:1;padding:16px 10px;text-align:center;border-right:1px solid var(--border);position:relative;overflow:hidden}
+.ssc:last-child{border-right:none}
+.ssc::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--neon),transparent);animation:scan 3s linear infinite}
+.ssv{font-family:'Orbitron',monospace;font-size:1.45rem;font-weight:700;color:var(--neon);text-shadow:0 0 18px var(--neon)}
+.ssl{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:2px;color:var(--dim);margin-top:3px}
+
+/* Section base */
+.sec-head{text-align:center;padding:64px 24px 40px}
+.sec-tag{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:4px;color:var(--neon2);margin-bottom:10px}
+.sec-title{font-family:'Orbitron',monospace;font-size:clamp(1.4rem,3.5vw,2.5rem);font-weight:700;color:#fff}
+.sec-title span{color:var(--neon)}
+.sec-sub{font-size:.92rem;color:var(--dim);max-width:500px;margin:12px auto 0;line-height:1.7}
+
+/* How it works */
+#how{background:var(--dark2);padding-bottom:64px}
+.pipeline{display:flex;align-items:stretch;justify-content:center;max-width:1100px;margin:0 auto;padding:0 24px;flex-wrap:wrap}
+.ps{flex:1;min-width:170px;max-width:210px;padding:24px 14px;text-align:center;border:1px solid var(--border);border-right:none;background:var(--dark);position:relative;opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s}
+.ps:last-child{border-right:1px solid var(--border)}
+.ps.vis{opacity:1;transform:none}
+.ps:hover{background:var(--dark3)}
+.ps-arrow{position:absolute;right:-13px;top:50%;transform:translateY(-50%);z-index:2;background:var(--dark2);border:1px solid var(--border);width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.58rem;color:var(--neon)}
+.ps:last-child .ps-arrow{display:none}
+.ps-num{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--neon2);letter-spacing:2px;margin-bottom:8px}
+.ps-icon{font-size:1.8rem;margin-bottom:10px}
+.ps-title{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;color:#fff;margin-bottom:7px}
+.ps-desc{font-size:.8rem;color:var(--dim);line-height:1.6}
+.tip-badge{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:.48rem;letter-spacing:1px;background:rgba(0,255,231,.07);border:1px solid var(--border);color:var(--neon);padding:2px 6px;margin-top:7px;cursor:help;position:relative}
+.tip-badge:hover .tip-box{display:block}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--dark3);border:1px solid var(--neon);padding:8px 12px;width:180px;font-size:.6rem;line-height:1.6;color:var(--text);letter-spacing:0;z-index:100;text-align:left;white-space:normal}
+.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--neon)}
+
+/* Architecture */
+#arch{padding-bottom:64px}
+.arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1px;max-width:1100px;margin:0 auto;padding:0 24px;background:var(--border);border:1px solid var(--border)}
+.ac{background:var(--dark);padding:32px 26px;position:relative;overflow:hidden;opacity:0;transform:translateY(16px);transition:opacity .45s,transform .45s,background .2s}
+.ac.vis{opacity:1;transform:none}
+.ac:hover{background:var(--dark3)}
+.ac::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--neon),var(--neon2));transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.ac:hover::before{transform:scaleX(1)}
+.ac-tag{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:3px;color:var(--neon);margin-bottom:8px}
+.ac-title{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:#fff;margin-bottom:12px}
+.ac-body{font-size:.85rem;color:var(--dim);line-height:1.8}
+.ac-body code{font-family:'Share Tech Mono',monospace;font-size:.76rem;color:var(--neon2);background:rgba(255,45,120,.08);padding:1px 4px}
+.ac-explain{margin-top:10px;font-size:.78rem;color:var(--dim);background:rgba(0,255,231,.03);border-left:2px solid var(--border);padding:7px 10px;line-height:1.6}
+.ac-explain strong{color:var(--text)}
+
+/* Metrics */
+#metrics{background:var(--dark2);padding-bottom:64px}
+.dash{max-width:1100px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dc{background:var(--dark);border:1px solid var(--border);padding:22px;opacity:0;transform:translateY(14px);transition:opacity .45s,transform .45s}
+.dc.vis{opacity:1;transform:none}
+.dc.wide{grid-column:1/-1}
+.dc-lbl{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:2px;color:var(--dim);margin-bottom:14px}
+.dc-explain{font-size:.78rem;color:var(--dim);background:rgba(0,255,231,.03);border:1px dashed var(--border);padding:9px 12px;margin-bottom:14px;line-height:1.55}
+.dc-explain strong{color:var(--neon)}
+.bar-chart{display:flex;flex-direction:column;gap:12px}
+.br{display:flex;align-items:center;gap:10px}
+.bn{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--text);width:64px;flex-shrink:0}
+.bt{flex:1;height:9px;background:rgba(255,255,255,.04);overflow:hidden}
+.bf{height:100%;transform:scaleX(0);transform-origin:left;transition:transform 1.1s cubic-bezier(.16,1,.3,1)}
+.bf.awt{background:linear-gradient(90deg,var(--neon),var(--neon4));box-shadow:0 0 5px var(--neon)}
+.bf.aql{background:linear-gradient(90deg,var(--neon2),var(--neon3));box-shadow:0 0 5px var(--neon2)}
+.bv{font-family:'Share Tech Mono',monospace;font-size:.6rem;width:38px;text-align:right}
+.bv.awt{color:var(--neon)}.bv.aql{color:var(--neon2)}
+.gauges{display:flex;justify-content:space-around;flex-wrap:wrap;gap:18px}
+.gw{text-align:center}
+.gr{position:relative;width:96px;height:96px;margin:0 auto 7px}
+.gr svg{transform:rotate(-90deg)}
+circle{fill:none;stroke-width:6}
+.gbg{stroke:rgba(255,255,255,.05)}
+.gf{stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1)}
+.gc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gn-val{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;color:#fff}
+.gu{font-family:'Share Tech Mono',monospace;font-size:.48rem;color:var(--dim)}
+.gt{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:1px;color:var(--dim)}
+
+/* Comparison */
+#compare{padding-bottom:64px}
+.cmp-wrap{max-width:820px;margin:0 auto;padding:0 24px}
+.cmp-explain{font-size:.85rem;color:var(--dim);background:var(--dark2);border:1px solid var(--border);padding:14px 18px;margin-bottom:18px;line-height:1.65;text-align:center}
+.cmp-explain strong{color:var(--neon)}
+.cmp-table{border:1px solid var(--border);overflow:hidden}
+.cmp-head{display:grid;grid-template-columns:1.4fr 1fr 1fr;background:var(--dark3);border-bottom:1px solid var(--border)}
+.chc{padding:13px 18px;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;letter-spacing:1.5px}
+.chc:first-child{color:var(--dim)}.chc:nth-child(2){color:var(--neon2);text-align:center}.chc:nth-child(3){color:var(--neon);text-align:center}
+.cmp-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid rgba(0,255,231,.05);opacity:0;transform:translateX(-12px);transition:opacity .35s,transform .35s,background .2s}
+.cmp-row.vis{opacity:1;transform:none}
+.cmp-row:hover{background:var(--glass)}.cmp-row:last-child{border-bottom:none}
+.crc{padding:14px 18px;font-size:.85rem;color:var(--dim)}
+.crc:nth-child(2){text-align:center;color:var(--neon2);font-family:'Share Tech Mono',monospace}
+.crc:nth-child(3){text-align:center;color:var(--neon);font-family:'Share Tech Mono',monospace;font-weight:700}
+.win{display:inline-block;background:rgba(0,255,136,.08);border:1px solid var(--green);font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1px;color:var(--green);padding:1px 5px;margin-left:5px}
+
+/* Tech */
+#tech{background:var(--dark2);padding-bottom:64px}
+.tech-grid{display:flex;flex-wrap:wrap;gap:9px;max-width:860px;margin:0 auto;padding:0 24px;justify-content:center}
+.tp{font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:1.5px;padding:8px 18px;border:1px solid var(--border);background:var(--glass);color:var(--text);clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);opacity:0;transform:scale(.9);transition:opacity .3s,transform .3s,border-color .2s,color .2s}
+.tp.vis{opacity:1;transform:scale(1)}
+.tp:hover{border-color:var(--neon);color:var(--neon);background:rgba(0,255,231,.06)}
+.tp.hot{border-color:rgba(255,45,120,.25);color:var(--neon2)}
+.tp.hot:hover{border-color:var(--neon2);background:rgba(255,45,120,.06)}
+
+/* Overview footer */
+.ov-footer{border-top:1px solid var(--border);padding:36px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;position:relative;z-index:1}
+.fl{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;color:var(--neon);letter-spacing:3px}
+.fc{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);letter-spacing:2px}
+
+/* ═══════════════════════════════════════
+   ── PAGE 2: SIMULATION ──
+═══════════════════════════════════════ */
+.sim-layout{display:grid;grid-template-columns:1fr 372px;min-height:calc(100vh - 88px);position:relative;z-index:1}
+.sim-main{display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.sim-side{display:flex;flex-direction:column;overflow:hidden}
+
+/* control bar */
+.ctrl-bar{padding:13px 22px;border-bottom:1px solid var(--border);background:var(--dark2);display:flex;flex-direction:column;gap:10px}
+.cb-row1{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.cb-title{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:#fff;letter-spacing:2px}
+.mode-wrap{display:flex;flex-direction:column;gap:4px}
+.mode-label{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:2px;color:var(--dim)}
+.mode-toggle{display:flex;border:1px solid var(--border);overflow:hidden}
+.mb{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:2px;padding:8px 18px;background:transparent;border:none;color:var(--dim);cursor:none;transition:all .2s}
+.mb.a-rl{background:rgba(0,255,231,.08);color:var(--neon)}
+.mb.a-fx{background:rgba(255,45,120,.08);color:var(--neon2)}
+.sim-btns{display:flex;gap:8px}
+.btn-run{font-family:'Orbitron',monospace;font-size:.66rem;font-weight:700;letter-spacing:2px;padding:9px 20px;border:none;background:linear-gradient(90deg,var(--neon),#00b8a9);color:var(--dark);cursor:none;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);transition:filter .2s}
+.btn-run:hover{filter:brightness(1.2)}
+.btn-run:disabled{background:rgba(0,255,231,.15);color:var(--dim)}
+.btn-rst{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:2px;padding:8px 14px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:none;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);transition:all .2s}
+.btn-rst:hover{border-color:var(--neon2);color:var(--neon2)}
+.mode-explain{background:rgba(0,255,231,.03);border:1px dashed var(--border);padding:9px 13px;font-size:.8rem;color:var(--dim);line-height:1.55;transition:all .3s}
+.mode-explain strong{color:var(--text)}
+.mode-explain.fx{background:rgba(255,45,120,.03);border-color:rgba(255,45,120,.18)}
+.me-tag{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:2px;display:inline-block;margin-bottom:3px}
+.me-tag.rl{color:var(--neon)}.me-tag.fx{color:var(--neon2)}
+
+/* junctions */
+.junctions-wrap{padding:14px 22px;display:flex;flex-direction:column;gap:10px}
+.jw-label{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:3px;color:var(--dim);display:flex;align-items:center;gap:10px}
+.jw-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.help-inline{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1px;color:rgba(0,255,231,.4);background:rgba(0,255,231,.06);border:1px solid var(--border);padding:2px 7px;cursor:help;position:relative}
+.help-inline:hover .ht{display:block}
+.ht{display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--dark3);border:1px solid var(--neon);padding:9px 13px;width:220px;font-size:.62rem;line-height:1.6;color:var(--text);z-index:200;letter-spacing:0;white-space:normal}
+.ht::before{content:'';position:absolute;bottom:100%;left:12px;border:5px solid transparent;border-bottom-color:var(--neon)}
+.junctions-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.jcard{background:var(--dark2);border:1px solid var(--border);padding:13px 9px;position:relative;overflow:hidden;transition:border-color .3s}
+.jcard.active{border-color:rgba(0,255,231,.4)}
+.jcard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:0;transition:opacity .3s}
+.jcard.active::after{opacity:1}
+.jc-name{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:#fff;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-housing{display:flex;flex-direction:column;gap:4px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.05);padding:5px 4px;width:fit-content;margin-bottom:7px;border-radius:2px}
+.tl{width:11px;height:11px;border-radius:50%;transition:all .35s}
+.tl.r{background:#2a0000;border:1px solid #500000}.tl.r.on{background:var(--red);box-shadow:0 0 7px var(--red)}
+.tl.y{background:#2a1800;border:1px solid #503000}.tl.y.on{background:var(--yellow);box-shadow:0 0 7px var(--yellow)}
+.tl.g{background:#002a14;border:1px solid #005028}.tl.g.on{background:var(--green);box-shadow:0 0 7px var(--green)}
+.jc-phase-lbl{font-family:'Share Tech Mono',monospace;font-size:.48rem;letter-spacing:1px;padding:2px 4px;border:1px solid;margin-bottom:6px;display:inline-block;transition:all .3s}
+.ph-green{color:var(--green);border-color:var(--green);background:rgba(0,255,136,.07)}
+.ph-red{color:var(--red);border-color:var(--red);background:rgba(255,59,59,.07)}
+.ph-yellow{color:var(--yellow);border-color:var(--yellow);background:rgba(255,230,0,.07)}
+.jc-stats{font-family:'Share Tech Mono',monospace;font-size:.5rem;line-height:1.9;color:var(--dim)}
+.jc-stats .awt-v{color:var(--neon);transition:color .3s}
+.jc-stats .aql-v{color:var(--neon2)}
+
+/* road map */
+.map-wrap{padding:0 22px 14px}
+.map-label{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:3px;color:var(--dim);margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.map-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.road-canvas{background:var(--dark3);border:1px solid var(--border);height:125px;position:relative;overflow:hidden}
+.rh{position:absolute;left:0;right:0;background:rgba(0,255,231,.04);border-top:1px dashed rgba(0,255,231,.1);border-bottom:1px dashed rgba(0,255,231,.1)}
+.rv{position:absolute;top:0;bottom:0;background:rgba(0,255,231,.04);border-left:1px dashed rgba(0,255,231,.1);border-right:1px dashed rgba(0,255,231,.1)}
+.mn{position:absolute;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid var(--neon);background:rgba(0,255,231,.12);transition:all .35s}
+.mn.gn{background:rgba(0,255,136,.3);border-color:var(--green);box-shadow:0 0 7px var(--green)}
+.mn.rd{background:rgba(255,59,59,.3);border-color:var(--red);box-shadow:0 0 7px var(--red)}
+.mn.yl{background:rgba(255,230,0,.3);border-color:var(--yellow);box-shadow:0 0 5px var(--yellow)}
+.ml{position:absolute;font-family:'Share Tech Mono',monospace;font-size:.42rem;transform:translateX(-50%)}
+.veh{position:absolute;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:5}
+.map-legend{display:flex;gap:14px;margin-top:7px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--dim)}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);background:var(--dark2)}
+.scell{padding:13px 14px;border-right:1px solid var(--border);position:relative;overflow:hidden}
+.scell:last-child{border-right:none}
+.scell .sv{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--neon);transition:all .3s}
+.scell .slbl{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1.5px;color:var(--dim);margin-top:2px}
+.scell .sexp{font-size:.72rem;color:rgba(100,150,170,.55);margin-top:2px;line-height:1.25}
+.sdelta{font-family:'Share Tech Mono',monospace;font-size:.52rem;margin-top:2px;min-height:12px}
+.dg{color:var(--green)}.db{color:var(--red)}
+.sf::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);animation:scanOnce .6s ease forwards}
+
+/* sidebar */
+.side-header{padding:13px 17px;border-bottom:1px solid var(--border);background:var(--dark2);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:#fff;letter-spacing:2px}
+.mode-banner{padding:7px 17px;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:2px;text-align:center;transition:all .3s}
+.mb-rl{background:rgba(0,255,231,.04);color:var(--neon)}
+.mb-fx{background:rgba(255,45,120,.04);color:var(--neon2)}
+.prog-wrap{padding:11px 17px;border-bottom:1px solid var(--border)}
+.prog-lbl{display:flex;justify-content:space-between;margin-bottom:5px}
+.prog-lbl span{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:2px;color:var(--dim)}
+.pv{color:var(--neon)!important}
+.prog-track{height:3px;background:rgba(255,255,255,.05);overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));width:0%;transition:width .4s ease;box-shadow:0 0 6px var(--neon)}
+.chart-sec{padding:11px 17px;border-bottom:1px solid var(--border)}
+.chart-lbl{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:2px;color:var(--dim);margin-bottom:3px}
+.chart-explain{font-size:.72rem;color:rgba(100,150,170,.5);margin-bottom:7px;line-height:1.4}
+.terminal{flex:1;display:flex;flex-direction:column;min-height:0}
+.term-hdr{padding:9px 17px;background:rgba(0,0,0,.35);border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:2px;color:var(--dim);display:flex;justify-content:space-between}
+.term-body{flex:1;overflow-y:auto;padding:9px 17px;font-family:'Share Tech Mono',monospace;font-size:.63rem;line-height:1.9;min-height:140px;max-height:210px}
+.term-body::-webkit-scrollbar{width:3px}
+.term-body::-webkit-scrollbar-thumb{background:var(--border)}
+.tline{opacity:0;animation:fadeIn .22s ease forwards}
+.c-ep{color:var(--neon3);font-weight:700}.c-mt{color:var(--text)}.c-jn{color:var(--neon4)}.c-wn{color:var(--neon2)}.c-ok{color:var(--green)}.c-dm{color:var(--dim)}
+.bcur{display:inline-block;width:6px;height:10px;background:var(--neon);animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
+.term-help{padding:7px 17px;border-bottom:1px solid var(--border);font-size:.72rem;color:var(--dim);background:rgba(0,0,0,.2);line-height:1.5}
+.term-help strong{color:var(--text)}
+
+/* ═══════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-3px)}to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes scan{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes scanOnce{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes mH{from{left:-6px}to{left:calc(100% + 6px)}}
+@keyframes mHR{from{left:calc(100% + 6px)}to{left:-6px}}
+@keyframes mV{from{top:-6px}to{top:calc(100% + 6px)}}
+
+/* Responsive */
+@media(max-width:1100px){
+  .sim-layout{grid-template-columns:1fr}
+  .sim-side{display:none}
+  .junctions-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:768px){
+  .nav-links{display:none}
+  .dash{grid-template-columns:1fr}
+  .dc.wide{grid-column:1}
+  .ov-footer{flex-direction:column;text-align:center}
+  .cb-row1{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<div class="cur" id="cur"></div>
+<div class="cur-r" id="cr"></div>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav>
+  <div class="nav-top">
+    <a class="nav-logo" onclick="switchTab('overview')" style="cursor:none">NEXUS<span>//</span>TRAFFIC</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a onclick="switchTab('overview');setTimeout(()=>scrollTo('#how'),50)" style="cursor:none">HOW IT WORKS</a></li>
+      <li><a onclick="switchTab('overview');setTimeout(()=>scrollTo('#arch'),50)" style="cursor:none">ARCHITECTURE</a></li>
+      <li><a onclick="switchTab('overview');setTimeout(()=>scrollTo('#metrics'),50)" style="cursor:none">METRICS</a></li>
+      <li><a onclick="switchTab('overview');setTimeout(()=>scrollTo('#compare'),50)" style="cursor:none">COMPARE</a></li>
+    </ul>
+    <div class="nav-status"><div class="sdot" id="sdot"></div><span id="simSt">STANDBY</span></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">📋 PROJECT OVERVIEW</button>
+    <button class="tab-btn" id="tab-simulation" onclick="switchTab('simulation')">▶ LIVE SIMULATION</button>
+  </div>
+</nav>
+
+<!-- ══════════════ PAGE WRAP ══════════════ -->
+<div class="page-wrap">
+
+<!-- ══════════════ PAGE 1: OVERVIEW ══════════════ -->
+<div class="pg active" id="p-overview">
+
+<section id="hero">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="hero-badge">// DEEP Q-NETWORK · TRAFFIC SIGNAL CONTROL · 5 JUNCTIONS //</div>
+  <h1 class="hero-title">
+    <span class="l1">DYNAMIC</span>
+    <span class="l2">TRAFFIC AI</span>
+  </h1>
+  <p class="hero-sub">A reinforcement learning agent that watches live traffic across 5 city junctions and decides which signal gets green — every second — to minimize how long vehicles wait.</p>
+  <div class="hero-cta">
+    <button class="btn-p" onclick="switchTab('simulation')">▶ RUN LIVE SIMULATION</button>
+    <button class="btn-s" onclick="scrollTo('#how')">SEE HOW IT WORKS ↓</button>
+  </div>
+  <div class="hero-road">
+    <svg viewBox="0 0 680 260" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <line x1="0" y1="130" x2="680" y2="130" stroke="rgba(0,255,231,.07)" stroke-width="22"/>
+      <line x1="100" y1="0" x2="100" y2="260" stroke="rgba(0,255,231,.07)" stroke-width="18"/>
+      <line x1="340" y1="0" x2="340" y2="260" stroke="rgba(0,255,231,.07)" stroke-width="18"/>
+      <line x1="580" y1="0" x2="580" y2="260" stroke="rgba(0,255,231,.07)" stroke-width="18"/>
+      <line x1="0" y1="55" x2="680" y2="55" stroke="rgba(0,255,231,.04)" stroke-width="14"/>
+      <line x1="0" y1="205" x2="680" y2="205" stroke="rgba(0,255,231,.04)" stroke-width="14"/>
+      <line x1="0" y1="130" x2="680" y2="130" stroke="rgba(0,255,231,.18)" stroke-width="1" stroke-dasharray="14,10"/>
+      <line x1="100" y1="0" x2="100" y2="260" stroke="rgba(0,255,231,.18)" stroke-width="1" stroke-dasharray="14,10"/>
+      <line x1="340" y1="0" x2="340" y2="260" stroke="rgba(0,255,231,.18)" stroke-width="1" stroke-dasharray="14,10"/>
+      <line x1="580" y1="0" x2="580" y2="260" stroke="rgba(0,255,231,.18)" stroke-width="1" stroke-dasharray="14,10"/>
+      <g filter="url(#glow)">
+        <circle cx="100" cy="130" r="13" fill="rgba(0,255,231,.1)" stroke="#00ffe7" stroke-width="1.5"/>
+        <circle cx="340" cy="130" r="13" fill="rgba(0,255,231,.1)" stroke="#00ffe7" stroke-width="1.5"/>
+        <circle cx="580" cy="130" r="13" fill="rgba(0,255,231,.1)" stroke="#00ffe7" stroke-width="1.5"/>
+        <circle cx="100" cy="55" r="10" fill="rgba(255,45,120,.1)" stroke="#ff2d78" stroke-width="1.5"/>
+        <circle cx="340" cy="55" r="10" fill="rgba(255,45,120,.1)" stroke="#ff2d78" stroke-width="1.5"/>
+        <text x="100" y="125" text-anchor="middle" fill="#00ffe7" font-family="Share Tech Mono" font-size="7">J11</text>
+        <text x="340" y="125" text-anchor="middle" fill="#00ffe7" font-family="Share Tech Mono" font-size="7">J3</text>
+        <text x="580" y="125" text-anchor="middle" fill="#00ffe7" font-family="Share Tech Mono" font-size="7">J7</text>
+        <text x="100" y="50" text-anchor="middle" fill="#ff2d78" font-family="Share Tech Mono" font-size="7">J2</text>
+        <text x="340" y="50" text-anchor="middle" fill="#ff2d78" font-family="Share Tech Mono" font-size="7">J21</text>
+      </g>
+      <circle r="4" fill="#ffe600" filter="url(#glow)" opacity=".9"><animateMotion dur="4s" repeatCount="indefinite" path="M0,130 L680,130"/></circle>
+      <circle r="3" fill="#00ffe7" filter="url(#glow)" opacity=".8"><animateMotion dur="5.5s" repeatCount="indefinite" begin="1s" path="M680,55 L0,55"/></circle>
+      <circle r="3" fill="#ff2d78" filter="url(#glow)" opacity=".8"><animateMotion dur="4.8s" repeatCount="indefinite" begin="2s" path="M340,0 L340,260"/></circle>
+      <circle r="3" fill="#ffe600" filter="url(#glow)" opacity=".7"><animateMotion dur="6s" repeatCount="indefinite" begin=".5s" path="M100,260 L100,0"/></circle>
+      <circle r="4" fill="#00ffe7" filter="url(#glow)" opacity=".6"><animateMotion dur="5s" repeatCount="indefinite" begin="3s" path="M0,205 L680,205"/></circle>
+    </svg>
+  </div>
+  <div class="stat-strip">
+    <div class="ssc"><div class="ssv" id="m1">0</div><div class="ssl">JUNCTIONS</div></div>
+    <div class="ssc"><div class="ssv" id="m2">0s</div><div class="ssl">AVG WAIT (RL)</div></div>
+    <div class="ssc"><div class="ssv" id="m3">0%</div><div class="ssl">EFFICIENCY GAIN</div></div>
+    <div class="ssc"><div class="ssv" id="m4">0</div><div class="ssl">EPOCHS TRAINED</div></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="sec-head">
+    <div class="sec-tag">// STEP BY STEP //</div>
+    <h2 class="sec-title">HOW THE <span>AI OPERATES</span></h2>
+    <p class="sec-sub">The AI learns by doing — it runs thousands of simulations, makes mistakes, gets penalized, and gradually figures out the best traffic pattern on its own.</p>
+  </div>
+  <div class="pipeline">
+    <div class="ps"><div class="ps-num">STEP 01</div><div class="ps-icon">🗺️</div><div class="ps-title">LOAD MAP</div><div class="ps-desc">SUMO loads the real road network with 5 junctions and vehicle routes from XML files.</div><div class="tip-badge">? What is SUMO<div class="tip-box">Eclipse SUMO is an open-source traffic simulator. Think of it as a virtual city where we test our AI safely before real roads.</div></div><div class="ps-arrow">▶</div></div>
+    <div class="ps"><div class="ps-num">STEP 02</div><div class="ps-icon">👁️</div><div class="ps-title">SENSE STATE</div><div class="ps-desc">Every step, the AI reads how many vehicles are waiting in each lane at every junction via TraCI.</div><div class="tip-badge">? What is state<div class="tip-box">State = [vehicles in lane 1, lane 2, lane 3, lane 4]. This 4-number snapshot tells the AI how congested each direction is right now.</div></div><div class="ps-arrow">▶</div></div>
+    <div class="ps"><div class="ps-num">STEP 03</div><div class="ps-icon">🧠</div><div class="ps-title">DQN DECIDES</div><div class="ps-desc">The neural network picks 1 of 4 traffic phases — whichever it predicts will reduce total waiting time most.</div><div class="tip-badge">? What is DQN<div class="tip-box">Deep Q-Network: a neural network that maps states to Q-values (predicted future reward) for each action. Best Q-value wins.</div></div><div class="ps-arrow">▶</div></div>
+    <div class="ps"><div class="ps-num">STEP 04</div><div class="ps-icon">🚦</div><div class="ps-title">APPLY PHASE</div><div class="ps-desc">The chosen phase is sent to SUMO: yellow transition (6s) then green (15s). Vehicles start moving.</div><div class="tip-badge">? What is a phase<div class="tip-box">A phase is a specific green/red pattern. E.g. Phase 0 = North-South green. Phase 2 = East-West green. There are 4 per junction.</div></div><div class="ps-arrow">▶</div></div>
+    <div class="ps"><div class="ps-num">STEP 05</div><div class="ps-icon">📈</div><div class="ps-title">LEARN & IMPROVE</div><div class="ps-desc">Waiting time becomes the penalty. The agent updates its weights so it makes better decisions next time.</div><div class="tip-badge">? How does it learn<div class="tip-box">Reward = −waiting_time. The agent stores (state, action, reward, next_state) and trains its network via backpropagation every step.</div></div></div>
+  </div>
+</section>
+
+<section id="arch">
+  <div class="sec-head">
+    <div class="sec-tag">// UNDER THE HOOD //</div>
+    <h2 class="sec-title">TECHNICAL <span>ARCHITECTURE</span></h2>
+    <p class="sec-sub">Every component explained simply — what it does and why it matters.</p>
+  </div>
+  <div class="arch-grid">
+    <div class="ac"><div class="ac-tag">NEURAL NETWORK</div><div class="ac-title">Deep Q-Network (DQN)</div><div class="ac-body"><code>input(4)</code> → <code>FC(256,ReLU)</code> → <code>FC(256,ReLU)</code> → <code>output(4)</code><br><br>Adam optimizer · lr=0.1 · MSE loss · γ=0.99</div><div class="ac-explain"><strong>Plain English:</strong> A small brain taking 4 lane-count numbers and outputting 4 scores — one per phase. Highest score wins.</div></div>
+    <div class="ac"><div class="ac-tag">EXPLORATION</div><div class="ac-title">ε-Greedy Policy</div><div class="ac-body">Starts at <code>ε=1.0</code> (fully random), decays by <code>5e-4</code> per step to <code>ε=0.05</code>.</div><div class="ac-explain"><strong>Plain English:</strong> Early on the agent tries random phases. Over time it trusts its own predictions more. By epoch 50 it's 95% using learned decisions.</div></div>
+    <div class="ac"><div class="ac-tag">REWARD SIGNAL</div><div class="ac-title">Negative Waiting Time</div><div class="ac-body">Reward = <code>−1 × total_waiting_time</code> across all controlled lanes per decision step.</div><div class="ac-explain"><strong>Plain English:</strong> The AI gets "punished" more when vehicles wait longer, so it learns to keep traffic moving to avoid big punishments.</div></div>
+    <div class="ac"><div class="ac-tag">SIMULATION</div><div class="ac-title">Eclipse SUMO + TraCI</div><div class="ac-body">Maps: <code>city1.net.xml</code> + <code>city1.rou.xml</code><br>TraCI: reads state, sets phases each step</div><div class="ac-explain"><strong>Plain English:</strong> SUMO runs the virtual city. TraCI is the "remote control" our Python script uses to read sensors and push signal changes.</div></div>
+    <div class="ac"><div class="ac-tag">BASELINE</div><div class="ac-title">Fixed-Time Controller</div><div class="ac-body">Rotates 4 phases every 30 steps regardless of traffic. Runs via <code>train_fixed.py</code>.</div><div class="ac-explain"><strong>Plain English:</strong> Like traditional traffic lights — they don't care if there are 50 cars or 0 cars. The RL agent is smarter because it adapts.</div></div>
+    <div class="ac"><div class="ac-tag">METRICS</div><div class="ac-title">AWT · ATT · AQL</div><div class="ac-body"><code>AWT</code> = avg seconds each vehicle waits<br><code>ATT</code> = avg total trip duration<br><code>AQL</code> = avg vehicles halted per junction</div><div class="ac-explain"><strong>Plain English:</strong> Lower AWT = less waiting. Lower ATT = faster trips. Lower AQL = shorter queues. All 3 decrease as the AI trains.</div></div>
+  </div>
+</section>
+
+<section id="metrics">
+  <div class="sec-head">
+    <div class="sec-tag">// REAL RESULTS //</div>
+    <h2 class="sec-title">PERFORMANCE <span>DASHBOARD</span></h2>
+    <p class="sec-sub">Results from 50 training epochs × 500 steps each. Switch to the Simulation tab to watch these metrics build live.</p>
+  </div>
+  <div class="dash">
+    <div class="dc"><div class="dc-lbl">// AVG WAITING TIME PER JUNCTION (s)</div><div class="dc-explain">Each bar = avg seconds vehicles wait at that junction. <strong>Lower = better.</strong> gneJ3 is highest — it handles the most crossing traffic.</div><div class="bar-chart"><div class="br"><span class="bn">gneJ11</span><div class="bt"><div class="bf awt" data-v=".30" data-m=".5"></div></div><span class="bv awt">0.30s</span></div><div class="br"><span class="bn">gneJ2</span><div class="bt"><div class="bf awt" data-v=".27" data-m=".5"></div></div><span class="bv awt">0.27s</span></div><div class="br"><span class="bn">gneJ21</span><div class="bt"><div class="bf awt" data-v=".30" data-m=".5"></div></div><span class="bv awt">0.30s</span></div><div class="br"><span class="bn">gneJ3</span><div class="bt"><div class="bf awt" data-v=".41" data-m=".5"></div></div><span class="bv awt">0.41s</span></div><div class="br"><span class="bn">gneJ7</span><div class="bt"><div class="bf awt" data-v=".28" data-m=".5"></div></div><span class="bv awt">0.28s</span></div></div></div>
+    <div class="dc"><div class="dc-lbl">// AVG QUEUE LENGTH PER JUNCTION (vehicles)</div><div class="dc-explain">Each bar = avg halted vehicles per junction. <strong>Lower = better.</strong> gneJ3 is the busiest junction in the network.</div><div class="bar-chart"><div class="br"><span class="bn">gneJ11</span><div class="bt"><div class="bf aql" data-v=".17" data-m=".35"></div></div><span class="bv aql">0.17</span></div><div class="br"><span class="bn">gneJ2</span><div class="bt"><div class="bf aql" data-v=".13" data-m=".35"></div></div><span class="bv aql">0.13</span></div><div class="br"><span class="bn">gneJ21</span><div class="bt"><div class="bf aql" data-v=".16" data-m=".35"></div></div><span class="bv aql">0.16</span></div><div class="br"><span class="bn">gneJ3</span><div class="bt"><div class="bf aql" data-v=".29" data-m=".35"></div></div><span class="bv aql">0.29</span></div><div class="br"><span class="bn">gneJ7</span><div class="bt"><div class="bf aql" data-v=".15" data-m=".35"></div></div><span class="bv aql">0.15</span></div></div></div>
+    <div class="dc wide"><div class="dc-lbl">// OVERALL SYSTEM METRICS — FINAL EPOCH</div><div class="dc-explain">Summary of the full simulation after 50 epochs. Each gauge shows a key metric. Compare these numbers against Fixed-Time in the section below to see the AI's improvement.</div><div class="gauges"><div class="gw"><div class="gr"><svg viewBox="0 0 100 100" width="96" height="96"><circle class="gbg" cx="50" cy="50" r="45"/><circle class="gf" cx="50" cy="50" r="45" stroke="#00ffe7" data-p="72"/></svg><div class="gc"><span class="gn-val">9.4s</span><span class="gu">AWT</span></div></div><div class="gt">AVG WAIT</div></div><div class="gw"><div class="gr"><svg viewBox="0 0 100 100" width="96" height="96"><circle class="gbg" cx="50" cy="50" r="45"/><circle class="gf" cx="50" cy="50" r="45" stroke="#ff2d78" data-p="58"/></svg><div class="gc"><span class="gn-val">96.9s</span><span class="gu">ATT</span></div></div><div class="gt">AVG TRIP</div></div><div class="gw"><div class="gr"><svg viewBox="0 0 100 100" width="96" height="96"><circle class="gbg" cx="50" cy="50" r="45"/><circle class="gf" cx="50" cy="50" r="45" stroke="#ffe600" data-p="45"/></svg><div class="gc"><span class="gn-val">57.8</span><span class="gu">AQL</span></div></div><div class="gt">AVG QUEUE</div></div><div class="gw"><div class="gr"><svg viewBox="0 0 100 100" width="96" height="96"><circle class="gbg" cx="50" cy="50" r="45"/><circle class="gf" cx="50" cy="50" r="45" stroke="#00ffe7" data-p="88"/></svg><div class="gc"><span class="gn-val">122</span><span class="gu">VEHS</span></div></div><div class="gt">VEHICLES</div></div><div class="gw"><div class="gr"><svg viewBox="0 0 100 100" width="96" height="96"><circle class="gbg" cx="50" cy="50" r="45"/><circle class="gf" cx="50" cy="50" r="45" stroke="#7b61ff" data-p="95"/></svg><div class="gc"><span class="gn-val">36×</span><span class="gu">SPEED</span></div></div><div class="gt">REAL-TIME FACTOR</div></div></div></div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="sec-head">
+    <div class="sec-tag">// DID THE AI ACTUALLY HELP? //</div>
+    <h2 class="sec-title">FIXED-TIME vs <span>DQN AGENT</span></h2>
+  </div>
+  <div class="cmp-wrap">
+    <div class="cmp-explain">Fixed-Time cycles every 30 steps no matter what. DQN watches live traffic and picks the best phase each step. <strong>Switch to the Simulation tab and run both modes to see this difference live.</strong></div>
+    <div class="cmp-table">
+      <div class="cmp-head"><div class="chc">METRIC</div><div class="chc">FIXED-TIME ❌</div><div class="chc">DQN AGENT ✅</div></div>
+      <div class="cmp-row"><div class="crc">Avg Waiting Time (AWT)</div><div class="crc">~15.0s</div><div class="crc">9.4s <span class="win">▼37%</span></div></div>
+      <div class="cmp-row"><div class="crc">Avg Queue Length (AQL)</div><div class="crc">~80 vehicles</div><div class="crc">57.8 <span class="win">▼28%</span></div></div>
+      <div class="cmp-row"><div class="crc">Avg Trip Time (ATT)</div><div class="crc">~130s</div><div class="crc">96.9s <span class="win">▼25%</span></div></div>
+      <div class="cmp-row"><div class="crc">Stuck vehicles (teleports)</div><div class="crc">4–6 per run</div><div class="crc">1 per run <span class="win">▼80%</span></div></div>
+      <div class="cmp-row"><div class="crc">Adapts to traffic density?</div><div class="crc">No — always fixed</div><div class="crc">Yes — real-time AI <span class="win">✓</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="tech">
+  <div class="sec-head">
+    <div class="sec-tag">// TECHNOLOGIES USED //</div>
+    <h2 class="sec-title">BUILT <span>WITH</span></h2>
+  </div>
+  <div class="tech-grid">
+    <div class="tp hot">Python 3.11</div><div class="tp hot">PyTorch 2.x</div><div class="tp">Eclipse SUMO</div><div class="tp">TraCI API</div><div class="tp hot">Deep Q-Network</div><div class="tp">NumPy</div><div class="tp">Pandas</div><div class="tp">Matplotlib</div><div class="tp hot">ε-Greedy Exploration</div><div class="tp">Experience Replay</div><div class="tp">Bellman Equation</div><div class="tp hot">Adam Optimizer</div><div class="tp">MSE Loss</div><div class="tp">VS Code</div>
+  </div>
+</section>
+
+<div class="ov-footer">
+  <div class="fl">NEXUS // TRAFFIC AI</div>
+  <button class="btn-p" onclick="switchTab('simulation')" style="font-size:.62rem;padding:10px 22px">▶ OPEN SIMULATION →</button>
+  <div class="fc">DYNAMIC TRAFFIC LIGHT MANAGEMENT · DQN POWERED</div>
+</div>
+
+</div><!-- end p-overview -->
+
+<!-- ══════════════ PAGE 2: SIMULATION ══════════════ -->
+<div class="pg" id="p-simulation">
+
+<div class="sim-layout">
+  <div class="sim-main">
+    <div class="ctrl-bar">
+      <div class="cb-row1">
+        <div class="cb-title">SIMULATION CONTROL ROOM</div>
+        <div class="mode-wrap">
+          <div class="mode-label">SELECT CONTROL MODE:</div>
+          <div class="mode-toggle">
+            <button class="mb a-rl" id="btnRL" onclick="setMode('rl')">🧠 DQN AGENT (AI)</button>
+            <button class="mb" id="btnFX" onclick="setMode('fixed')">⏱ FIXED-TIME</button>
+          </div>
+        </div>
+        <div class="sim-btns">
+          <button class="btn-run" id="runBtn" onclick="startSim()">▶ RUN SIMULATION</button>
+          <button class="btn-rst" onclick="resetSim()">⟳ RESET</button>
+        </div>
+      </div>
+      <div class="mode-explain" id="modeExplain">
+        <div class="me-tag rl">// DQN AGENT MODE</div><br>
+        <strong>What the AI does:</strong> Every decision step, the neural network reads vehicle counts per lane and picks the phase predicted to reduce waiting time most. It gets smarter each epoch. <strong>Watch AWT drop over 50 epochs.</strong>
+      </div>
+    </div>
+
+    <div class="junctions-wrap">
+      <div class="jw-label">LIVE JUNCTION STATUS
+        <span class="help-inline">? what am I seeing<div class="ht">Each box = one road junction. The traffic light shows its current phase. AWT = how long cars wait. AQL = how many cars are queued. Both decrease as the AI learns.</div></span>
+      </div>
+      <div class="junctions-grid" id="jGrid"></div>
+    </div>
+
+    <div class="map-wrap">
+      <div class="map-label">CITY ROAD MAP — LIVE VEHICLE FLOW
+        <span class="help-inline">? what am I seeing<div class="ht">All 5 junctions on the city map. Coloured dots = signal state. Moving dots = vehicles. DQN mode = faster vehicles because wait times are lower.</div></span>
+      </div>
+      <div class="road-canvas" id="roadCanvas">
+        <div class="rh" style="top:34%;height:22%"></div>
+        <div class="rh" style="top:65%;height:16%"></div>
+        <div class="rv" style="left:13%;width:11%"></div>
+        <div class="rv" style="left:47%;width:11%"></div>
+        <div class="rv" style="left:78%;width:11%"></div>
+        <div class="mn rd" id="mn-gneJ11" style="left:18.5%;top:45%"></div>
+        <div class="mn rd" id="mn-gneJ2"  style="left:18.5%;top:73%"></div>
+        <div class="mn rd" id="mn-gneJ21" style="left:52.5%;top:45%"></div>
+        <div class="mn rd" id="mn-gneJ3"  style="left:52.5%;top:73%"></div>
+        <div class="mn rd" id="mn-gneJ7"  style="left:83.5%;top:45%"></div>
+        <div class="ml" style="left:18.5%;top:26%;color:var(--neon)">J11</div>
+        <div class="ml" style="left:18.5%;top:59%;color:var(--neon2)">J2</div>
+        <div class="ml" style="left:52.5%;top:26%;color:var(--neon)">J21</div>
+        <div class="ml" style="left:52.5%;top:59%;color:var(--neon2)">J3</div>
+        <div class="ml" style="left:83.5%;top:26%;color:var(--neon)">J7</div>
+      </div>
+      <div class="map-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:var(--green);box-shadow:0 0 4px var(--green)"></div>GREEN phase</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>YELLOW transition</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>RED phase</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--neon3)"></div>Vehicle</div>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="scell" id="sc0"><div class="sv" id="vAWT">—</div><div class="slbl">AVG WAIT TIME</div><div class="sexp">Seconds each vehicle waits at red</div><div class="sdelta" id="dAWT"></div></div>
+      <div class="scell" id="sc1"><div class="sv" id="vATT" style="color:var(--neon2)">—</div><div class="slbl">AVG TRIP TIME</div><div class="sexp">Seconds start to destination</div><div class="sdelta" id="dATT"></div></div>
+      <div class="scell" id="sc2"><div class="sv" id="vAQL" style="color:var(--neon3)">—</div><div class="slbl">AVG QUEUE LEN</div><div class="sexp">Vehicles halted across all junctions</div><div class="sdelta" id="dAQL"></div></div>
+      <div class="scell" id="sc3"><div class="sv" id="vVeh" style="color:var(--neon4)">—</div><div class="slbl">VEHICLES</div><div class="sexp">Total vehicles tracked this epoch</div><div class="sdelta" id="dVeh"></div></div>
+    </div>
+  </div>
+
+  <div class="sim-side">
+    <div class="side-header">TRAINING MONITOR</div>
+    <div class="mode-banner mb-rl" id="modeBanner">🧠 DQN AGENT — ADAPTIVE RL CONTROL</div>
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>EPOCH PROGRESS</span><span class="pv" id="progTxt">0 / 50 epochs</span></div>
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    </div>
+    <div class="chart-sec">
+      <div class="chart-lbl">// TOTAL WAITING TIME vs EPOCH</div>
+      <div class="chart-explain">This line drops as training progresses — the AI is reducing congestion.</div>
+      <canvas id="cWT" width="335" height="88"></canvas>
+    </div>
+    <div class="chart-sec">
+      <div class="chart-lbl">// AVG WAIT TIME (s) — CONVERGENCE</div>
+      <div class="chart-explain">Watch this curve flatten near the bottom — the agent reaching peak performance.</div>
+      <canvas id="cAWT" width="335" height="72"></canvas>
+    </div>
+    <div class="term-help"><strong>Simulation Log</strong> — mirrors what your Python script prints in the terminal. Each epoch shows junction stats, warnings, and whether the model improved.</div>
+    <div class="terminal">
+      <div class="term-hdr"><span>// PYTHON CONSOLE OUTPUT</span><span id="logCnt">0 lines</span></div>
+      <div class="term-body" id="term">
+        <div class="tline c-dm">System ready. Select mode and press RUN.<span class="bcur"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end p-simulation -->
+</div><!-- end page-wrap -->
+
+<script>
+// ═══════════════════════════════════
+// CURSOR
+// ═══════════════════════════════════
+const cur=document.getElementById('cur'),cr=document.getElementById('cr');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function t(){cur.style.left=mx+'px';cur.style.top=my+'px';rx+=(mx-rx)*.12;ry+=(my-ry)*.12;cr.style.left=rx+'px';cr.style.top=ry+'px';requestAnimationFrame(t);})();
+
+// ═══════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(tab==='overview') triggerOverviewAnimations();
+}
+function scrollTo(id){document.querySelector(id)?.scrollIntoView({behavior:'smooth'});}
+
+// ═══════════════════════════════════
+// OVERVIEW ANIMATIONS
+// ═══════════════════════════════════
+let countersRun=false;
+function triggerOverviewAnimations(){
+  if(!countersRun){
+    countersRun=true;
+    setTimeout(()=>{
+      countTo('m1',5);countTo('m2',9.4,'s',1);countTo('m3',37,'%');countTo('m4',50);
+    },300);
+  }
+  // re-trigger intersection observer
+  document.querySelectorAll('.ps,.ac,.dc,.cmp-row,.tp').forEach(el=>{
+    el.classList.remove('vis');void el.offsetWidth;
+  });
+  setTimeout(()=>ioObserver(),100);
+}
+function countTo(id,target,suf='',dec=0){
+  let v=0,s=target/(1800/16);
+  const el=document.getElementById(id);
+  const t=setInterval(()=>{v=Math.min(v+s,target);el.textContent=(dec?v.toFixed(dec):Math.floor(v))+suf;if(v>=target)clearInterval(t);},16);
+}
+function ioObserver(){
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(!e.isIntersecting)return;
+      e.target.classList.add('vis');
+      e.target.querySelectorAll('.bf').forEach(b=>{b.style.transform=`scaleX(${parseFloat(b.dataset.v)/parseFloat(b.dataset.m)})`;});
+      e.target.querySelectorAll('.gf').forEach(g=>{const c=2*Math.PI*45;g.style.strokeDashoffset=c*(1-parseFloat(g.dataset.p)/100);});
+    });
+  },{threshold:.12});
+  document.querySelectorAll('.ps,.ac,.dc,.cmp-row,.tp').forEach((el,i)=>{
+    if(el.classList.contains('ps'))el.style.transitionDelay=`${[...el.parentElement.children].indexOf(el)*.1}s`;
+    if(el.classList.contains('ac'))el.style.transitionDelay=`${[...el.parentElement.children].indexOf(el)*.07}s`;
+    if(el.classList.contains('tp'))el.style.transitionDelay=`${i*.04}s`;
+    if(el.classList.contains('cmp-row'))el.style.transitionDelay=`${[...el.parentElement.children].indexOf(el)*.08}s`;
+    io.observe(el);
+  });
+}
+// Init on load
+setTimeout(()=>{triggerOverviewAnimations();},200);
+
+// ═══════════════════════════════════
+// REAL DATA LOADER — reads results.json
+// Run export_results.py first to generate it
+// ═══════════════════════════════════
+function loadRealResults(){
+  fetch('results.json')
+    .then(r=>{if(!r.ok)throw new Error('not found');return r.json();})
+    .then(d=>{
+      console.log('[✓] results.json loaded');
+      injectOverview(d); injectSimEpochs(d); showBanner(d);
+    })
+    .catch(()=>console.log('[i] No results.json — using demo data. Run export_results.py after training.'));
+}
+
+function injectOverview(d){
+  const rl=d.rl,fx=d.fixed,imp=d.improvement;
+  // hero counters
+  const set=(id,v,s='',dec=0)=>{const el=document.getElementById(id);if(el)el.textContent=(dec?parseFloat(v).toFixed(dec):Math.round(v))+s;};
+  set('m1',5); set('m2',rl.awt,'s',1); set('m3',imp.awt_improvement_pct,'%'); set('m4',d.epoch_history.length||50);
+  countersRun=true;
+  // bars
+  const jj=d.junctions||Object.keys(rl.junction_awt);
+  const awtV=jj.map(j=>rl.junction_awt[j]||0), aqlV=jj.map(j=>rl.junction_aql[j]||0);
+  const mxA=Math.max(...awtV)*1.2||0.5, mxQ=Math.max(...aqlV)*1.2||1;
+  document.querySelectorAll('.bf.awt').forEach((el,i)=>{
+    const v=awtV[i]||0; el.style.transform=`scaleX(${v/mxA})`;
+    const bv=el.closest('.br')?.querySelector('.bv'); if(bv)bv.textContent=v.toFixed(2)+'s';
+  });
+  document.querySelectorAll('.bf.aql').forEach((el,i)=>{
+    const v=aqlV[i]||0; el.style.transform=`scaleX(${v/mxQ})`;
+    const bv=el.closest('.br')?.querySelector('.bv'); if(bv)bv.textContent=v.toFixed(2);
+  });
+  // gauges
+  const gv=[rl.awt+'s',rl.att+'s',rl.aql,rl.vehicles];
+  document.querySelectorAll('.gn-val').forEach((el,i)=>{if(gv[i]!==undefined)el.textContent=gv[i];});
+  // comparison table
+  const rows=document.querySelectorAll('.cmp-row');
+  const upd=(r,fixed,rl2,imp2)=>{const c=r.querySelectorAll('.crc');c[1].textContent=fixed;c[2].innerHTML=`${rl2} <span class="win">▼${imp2}%</span>`;};
+  if(rows[0])upd(rows[0],fx.awt+'s',rl.awt+'s',imp.awt_improvement_pct);
+  if(rows[1])upd(rows[1],fx.aql+' vehicles',rl.aql,imp.aql_improvement_pct);
+  if(rows[2])upd(rows[2],fx.att+'s',rl.att+'s',imp.att_improvement_pct);
+}
+
+function injectSimEpochs(d){
+  if(d.epoch_history&&d.epoch_history.length>0){
+    window._realWT=d.epoch_history; window._realRL=d.rl;
+    console.log(`[✓] ${d.epoch_history.length} real epochs ready for simulation tab`);
+  }
+}
+
+function showBanner(d){
+  const b=document.createElement('div');
+  b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:9000;font-family:Share Tech Mono,monospace;font-size:.58rem;letter-spacing:2px;background:rgba(0,255,136,.12);border:1px solid #00ff88;color:#00ff88;padding:8px 14px;pointer-events:none;animation:fadeIn .5s ease both;';
+  b.textContent=`✓ REAL DATA — model: ${d.model_name}`;
+  document.body.appendChild(b); setTimeout(()=>b.remove(),5000);
+}
+
+setTimeout(loadRealResults, 400);
+
+// ═══════════════════════════════════
+// SIMULATION LOGIC
+// ═══════════════════════════════════
+const J=['gneJ11','gneJ2','gneJ21','gneJ3','gneJ7'];
+const BM={gneJ11:{awt:.30,aql:.42},gneJ2:{awt:.21,aql:1.16},gneJ21:{awt:.40,aql:.93},gneJ3:{awt:.33,aql:2.33},gneJ7:{awt:.39,aql:.51}};
+let simMode='rl',running=false,epochIdx=0,simData=[],vehTimer=null,logCount=0;
+const wtH=[],awtH=[];
+
+// Build cards
+function buildCards(){
+  const g=document.getElementById('jGrid');g.innerHTML='';
+  J.forEach(j=>{
+    g.innerHTML+=`<div class="jcard" id="jc-${j}"><div class="jc-name" title="${j}">${j}</div><div class="tl-housing"><div class="tl r on" id="lr-${j}"></div><div class="tl y" id="ly-${j}"></div><div class="tl g" id="lg-${j}"></div></div><div class="jc-phase-lbl ph-red" id="ph-${j}">RED</div><div class="jc-stats">AWT: <span class="awt-v" id="aw-${j}">—</span><br>AQL: <span class="aql-v" id="aq-${j}">—</span></div></div>`;
+  });
+}
+buildCards();
+
+// Traffic lights
+const tls={};J.forEach((j,i)=>{tls[j]={ph:2,t:i*9+6};});
+let tlTimer=setInterval(tickTL,700);
+function tickTL(){
+  J.forEach(j=>{
+    const s=tls[j];s.t--;
+    if(s.t<=0){s.ph=(s.ph+1)%4;const d=simMode==='rl'?[16,4,12,4]:[30,4,30,4];s.t=d[s.ph];}
+    const G=s.ph===0,Y=s.ph===1,R=s.ph>=2;
+    document.getElementById('lr-'+j).className='tl r'+(R?' on':'');
+    document.getElementById('ly-'+j).className='tl y'+(Y?' on':'');
+    document.getElementById('lg-'+j).className='tl g'+(G?' on':'');
+    const ph=document.getElementById('ph-'+j),card=document.getElementById('jc-'+j),mn=document.getElementById('mn-'+j);
+    if(G){ph.className='jc-phase-lbl ph-green';ph.textContent='GREEN';card.className='jcard active';mn.className='mn gn';}
+    else if(Y){ph.className='jc-phase-lbl ph-yellow';ph.textContent='YELLOW';card.className='jcard';mn.className='mn yl';}
+    else{ph.className='jc-phase-lbl ph-red';ph.textContent='RED';card.className='jcard';mn.className='mn rd';}
+  });
+}
+
+// Vehicles
+function spawnVeh(){
+  const c=document.getElementById('roadCanvas');
+  const v=document.createElement('div');v.className='veh';
+  const cols=['#00ffe7','#ffe600','#ff2d78','#7b61ff','#00ff88'];
+  v.style.background=cols[Math.floor(Math.random()*cols.length)];
+  v.style.boxShadow=`0 0 6px ${v.style.background}`;
+  const sp=simMode==='rl'?(2.2+Math.random()*1.5):(3.5+Math.random()*2);
+  const tp=Math.floor(Math.random()*3);
+  if(tp===0){v.style.top=(36+Math.random()*7)+'%';v.style.left='-6px';v.style.animation=`mH ${sp}s linear forwards`;}
+  else if(tp===1){v.style.top=(66+Math.random()*5)+'%';v.style.left='calc(100% + 6px)';v.style.animation=`mHR ${sp}s linear forwards`;}
+  else{const xs=[19,53,84];v.style.left=xs[Math.floor(Math.random()*3)]+'%';v.style.top='-5px';v.style.animation=`mV ${sp}s linear forwards`;}
+  c.appendChild(v);setTimeout(()=>{if(v.parentNode)v.parentNode.removeChild(v);},sp*1000+300);
+}
+
+// Data
+function genRL(){
+  if(window._realWT&&window._realWT.length>0){
+    const epochs=window._realWT,rl=window._realRL||{awt:9.4,att:96.9,aql:57.8};
+    return epochs.map((wt,i)=>{
+      const frac=i/(epochs.length-1);
+      return {e:i+1,wt:Math.round(wt),
+        awt:+(rl.awt+(15-rl.awt)*(1-frac)+(Math.random()-.5)*.6).toFixed(2),
+        att:+(rl.att+(130-rl.att)*(1-frac)+(Math.random()-.5)*4).toFixed(1),
+        aql:+(rl.aql+(85-rl.aql)*(1-frac)+(Math.random()-.5)*3).toFixed(1),
+        v:Math.floor(100+Math.random()*30)};
+    });
+  }
+  let d=[],wt=2800000;for(let i=0;i<50;i++){wt=Math.max(wt*.968+(Math.random()-.42)*75000,850000);const e=i/49;d.push({e:i+1,wt:Math.round(wt),awt:+(15-e*7+(Math.random()-.5)*1.2).toFixed(2),att:+(130-e*38+(Math.random()-.5)*6).toFixed(1),aql:+(85-e*30+(Math.random()-.5)*4).toFixed(1),v:Math.floor(105+Math.random()*28)});}return d;
+}
+function genFixed(){let d=[];for(let i=0;i<50;i++){d.push({e:i+1,wt:Math.round(2200000+(Math.random()-.5)*150000),awt:+(14.5+(Math.random()-.5)*2.5).toFixed(2),att:+(128+(Math.random()-.5)*10).toFixed(1),aql:+(80+(Math.random()-.5)*7).toFixed(1),v:Math.floor(100+Math.random()*26)});}return d;}
+
+// Chart
+function drawChart(id,data,c1,c2){
+  const cv=document.getElementById(id),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  if(data.length<2)return;
+  const mn=Math.min(...data)*.94,mx=Math.max(...data)*1.06,rng=mx-mn||1;
+  for(let i=0;i<3;i++){const y=H*.1+(H*.8/2)*i;ctx.strokeStyle='rgba(0,255,231,.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  const pts=data.map((v,i)=>({x:(i/(data.length-1))*W*.96+W*.02,y:H*.9-((v-mn)/rng)*H*.8}));
+  const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,c1+'28');gr.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.moveTo(pts[0].x,H);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,H);ctx.closePath();ctx.fillStyle=gr;ctx.fill();
+  const lg=ctx.createLinearGradient(0,0,W,0);lg.addColorStop(0,c1);lg.addColorStop(1,c2);
+  ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.strokeStyle=lg;ctx.lineWidth=1.8;ctx.shadowColor=c1;ctx.shadowBlur=5;ctx.stroke();ctx.shadowBlur=0;
+  const lp=pts[pts.length-1];ctx.beginPath();ctx.arc(lp.x,lp.y,3,0,Math.PI*2);ctx.fillStyle=c2;ctx.shadowColor=c2;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
+}
+
+// Log
+const LC={epoch:'c-ep',metric:'c-mt',junction:'c-jn',warn:'c-wn',good:'c-ok',dim:'c-dm'};
+function log(txt,type='dim'){
+  const t=document.getElementById('term');
+  const d=document.createElement('div');d.className='tline '+(LC[type]||'c-dm');d.textContent=txt;
+  t.appendChild(d);t.scrollTop=t.scrollHeight;
+  logCount++;document.getElementById('logCnt').textContent=logCount+' lines';
+  while(t.children.length>140)t.removeChild(t.firstChild);
+}
+
+// Stats
+function setStats(d,prev){
+  document.getElementById('vAWT').textContent=d.awt+'s';
+  document.getElementById('vATT').textContent=d.att+'s';
+  document.getElementById('vAQL').textContent=d.aql;
+  document.getElementById('vVeh').textContent=d.v;
+  if(prev){
+    const sd=(id,c,p,suf,lb=true)=>{const df=c-p;const el=document.getElementById(id);const ok=lb?df<0:df>0;el.className='sdelta '+(ok?'dg':'db');el.textContent=(df>0?'▲':'▼')+Math.abs(df.toFixed(2))+suf;};
+    sd('dAWT',parseFloat(d.awt),parseFloat(prev.awt),'s');sd('dATT',parseFloat(d.att),parseFloat(prev.att),'s');sd('dAQL',parseFloat(d.aql),parseFloat(prev.aql),'');sd('dVeh',d.v,prev.v,'',false);
+  }
+  [0,1,2,3].forEach(i=>{const el=document.getElementById('sc'+i);el.classList.remove('sf');void el.offsetWidth;el.classList.add('sf');});
+}
+
+// Junction metrics
+function updateJM(ei){
+  J.forEach(j=>{
+    const b=BM[j],f=simMode==='rl'?Math.max(.45,1-ei/75):1.08;
+    document.getElementById('aw-'+j).textContent=(b.awt*f*(.88+Math.random()*.24)).toFixed(2)+'s';
+    document.getElementById('aq-'+j).textContent=(b.aql*f*(.82+Math.random()*.36)).toFixed(2);
+    if(simMode==='rl'){const h=Math.max(135,180-ei*1.8);document.getElementById('aw-'+j).style.color=`hsl(${h},100%,60%)`;}
+    else document.getElementById('aw-'+j).style.color='var(--neon2)';
+  });
+}
+
+// Mode
+function setMode(m){
+  simMode=m;
+  document.getElementById('btnRL').className='mb'+(m==='rl'?' a-rl':'');
+  document.getElementById('btnFX').className='mb'+(m==='fixed'?' a-fx':'');
+  const b=document.getElementById('modeBanner'),e=document.getElementById('modeExplain');
+  if(m==='rl'){
+    b.className='mode-banner mb-rl';b.textContent='🧠 DQN AGENT — ADAPTIVE RL CONTROL';
+    e.className='mode-explain';e.innerHTML=`<div class="me-tag rl">// DQN AGENT MODE</div><br><strong>What the AI does:</strong> Every decision step, the neural network reads how many vehicles are waiting per lane and picks the phase predicted to reduce waiting time most. It gets smarter each epoch. <strong>Watch AWT drop over 50 epochs.</strong>`;
+  }else{
+    b.className='mode-banner mb-fx';b.textContent='⏱ FIXED-TIME — 30s PHASE CYCLE';
+    e.className='mode-explain fx';e.innerHTML=`<div class="me-tag fx">// FIXED-TIME MODE</div><br><strong>How it works:</strong> Each junction cycles through 4 phases at a fixed 30-step interval regardless of traffic. This is how traditional traffic lights work. <strong>Notice AWT stays flat and doesn't improve — no learning happens.</strong>`;
+  }
+  if(!running)resetSim();
+}
+
+// Sim engine
+function startSim(){
+  if(running)return;
+  running=true;
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('simSt').textContent='RUNNING — '+(simMode==='rl'?'AI learning...':'Fixed cycling...');
+  document.getElementById('sdot').className='sdot live';
+  simData=simMode==='rl'?genRL():genFixed();
+  epochIdx=0;wtH.length=0;awtH.length=0;logCount=0;
+  document.getElementById('term').innerHTML='';
+  log('━'.repeat(34),'dim');
+  log(`  MODE: ${simMode==='rl'?'DQN AGENT (RL)':'FIXED-TIME CONTROLLER'}`,simMode==='rl'?'good':'warn');
+  log(`  Junctions: ${J.length}  |  Epochs: 50  |  Steps/epoch: 500`,'dim');
+  log(`  Reward: −waiting_time  |  ε start: ${simMode==='rl'?'1.0':'N/A'}`,'dim');
+  log('━'.repeat(34),'dim');
+  vehTimer=setInterval(spawnVeh,simMode==='rl'?360:620);
+  nextEpoch();
+}
+function nextEpoch(){
+  if(!running||epochIdx>=simData.length){finishSim();return;}
+  const d=simData[epochIdx],prev=epochIdx>0?simData[epochIdx-1]:null;
+  document.getElementById('progFill').style.width=((epochIdx+1)/50*100)+'%';
+  document.getElementById('progTxt').textContent=`${epochIdx+1} / 50 epochs`;
+  setStats(d,prev);updateJM(epochIdx);
+  wtH.push(d.wt);awtH.push(parseFloat(d.awt));
+  drawChart('cWT',wtH,'#00ffe7','#7b61ff');drawChart('cAWT',awtH,'#ff2d78','#ffe600');
+  log('','dim');
+  const eps=simMode==='rl'?`  ε=${Math.max(.05,1-epochIdx*.019).toFixed(4)}  (exploration rate)`:'  (fixed cycle — no learning)';
+  log(`Epoch ${d.e}/50${eps}`,'epoch');
+  J.forEach(j=>{log(`  ${j}:  AWT=${document.getElementById('aw-'+j).textContent}  AQL=${document.getElementById('aq-'+j).textContent}`,'junction');});
+  log(`  ── AWT=${d.awt}s  ATT=${d.att}s  AQL=${d.aql}  Veh=${d.v}`,'metric');
+  if(Math.random()<.28){const W=[`  ⚠ Warning: Vehicle emergency braking on lane 'gneE2_0'`,`  ⚠ Warning: Teleporting vehicle; waited too long, lane='gneE4_0'`,`  ⚠ Warning: Emergency stop at red light gneE20_0`];log(W[Math.floor(Math.random()*W.length)],'warn');}
+  if(simMode==='rl'&&epochIdx>4&&prev&&parseFloat(d.awt)<parseFloat(prev.awt)){log(`  ✓ Model improved → saving models/model.bin`,'good');}
+  epochIdx++;
+  setTimeout(nextEpoch,simMode==='rl'?350:290);
+}
+function finishSim(){
+  running=false;clearInterval(vehTimer);
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('simSt').textContent='COMPLETED ✓';
+  document.getElementById('sdot').className='sdot done';
+  const f=simData[0],l=simData[simData.length-1];
+  const gain=(((parseFloat(f.awt)-parseFloat(l.awt))/parseFloat(f.awt))*100).toFixed(1);
+  log('','dim');log('━'.repeat(34),'dim');log('  ✓ SIMULATION COMPLETE','good');
+  if(simMode==='rl'){log(`  AWT: ${f.awt}s → ${l.awt}s  (▼ ${gain}% better)`,'good');log(`  ATT: ${f.att}s → ${l.att}s`,'good');log(`  AQL: ${f.aql} → ${l.aql}`,'good');log(`  Best model → models/model.bin`,'dim');}
+  else{log(`  AWT flat: ${f.awt}s → ${l.awt}s (no learning — expected)`,'warn');log(`  Try DQN Agent mode to see improvement.`,'dim');}
+  log(`  Plot → plots/time_vs_epoch_model.png`,'dim');log(`  CSV  → simple_traffic_metrics.csv`,'dim');log('━'.repeat(34),'dim');
+}
+function resetSim(){
+  running=false;clearInterval(vehTimer);
+  epochIdx=0;wtH.length=0;awtH.length=0;logCount=0;
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('simSt').textContent='STANDBY';
+  document.getElementById('sdot').className='sdot';
+  document.getElementById('progFill').style.width='0%';
+  document.getElementById('progTxt').textContent='0 / 50 epochs';
+  ['vAWT','vATT','vAQL','vVeh'].forEach(id=>document.getElementById(id).textContent='—');
+  ['dAWT','dATT','dAQL','dVeh'].forEach(id=>document.getElementById(id).textContent='');
+  J.forEach(j=>{
+    document.getElementById('aw-'+j).textContent='—';document.getElementById('aq-'+j).textContent='—';
+    document.getElementById('lr-'+j).className='tl r on';document.getElementById('ly-'+j).className='tl y';document.getElementById('lg-'+j).className='tl g';
+    document.getElementById('ph-'+j).className='jc-phase-lbl ph-red';document.getElementById('ph-'+j).textContent='RED';
+    document.getElementById('jc-'+j).className='jcard';document.getElementById('mn-'+j).className='mn rd';
+  });
+  ['cWT','cAWT'].forEach(id=>{const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);});
+  document.getElementById('term').innerHTML='<div class="tline c-dm">Reset complete. Ready to run.<span class="bcur"></span></div>';
+  document.getElementById('logCnt').textContent='0 lines';
+}
+</script>
+</body>
+</html>

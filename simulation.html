@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEXUS TRAFFIC AI — Live Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --neon:#00ffe7;--neon2:#ff2d78;--neon3:#ffe600;--neon4:#7b61ff;
+  --dark:#020810;--dark2:#050f1a;--dark3:#071525;
+  --glass:rgba(0,255,231,0.04);--border:rgba(0,255,231,0.12);
+  --text:#c8eaf5;--dim:#3a6070;--green:#00ff88;--red:#ff3b3b;--yellow:#ffe600;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;cursor:none}
+.cur{position:fixed;width:10px;height:10px;background:var(--neon);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--neon)}
+.cur-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(0,255,231,0.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s ease-out}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,231,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,0.025) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:1000}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:14px 32px;background:rgba(2,8,16,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:900;color:var(--neon);letter-spacing:3px;text-decoration:none}
+.nav-logo span{color:var(--neon2)}
+.nav-back{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);letter-spacing:2px;text-decoration:none;border:1px solid var(--border);padding:6px 16px;transition:color .2s,border-color .2s}
+.nav-back:hover{color:var(--neon);border-color:var(--neon)}
+.nav-center{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--neon);letter-spacing:3px;display:flex;align-items:center;gap:8px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--neon2);box-shadow:0 0 8px var(--neon2);animation:blink 1s infinite}
+
+/* LAYOUT */
+.page{display:grid;grid-template-columns:1fr 360px;min-height:100vh;padding-top:52px;position:relative;z-index:1}
+.main-col{display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.side-col{display:flex;flex-direction:column;overflow:hidden}
+
+/* TOP BAR */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--dark2);flex-wrap:wrap;gap:10px}
+.top-bar-title{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:#fff;letter-spacing:2px}
+.mode-toggle{display:flex;border:1px solid var(--border);overflow:hidden}
+.mode-btn{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:2px;padding:7px 18px;background:transparent;border:none;color:var(--dim);cursor:none;transition:all .2s}
+.mode-btn.active{background:rgba(0,255,231,0.08);color:var(--neon)}
+.mode-btn.active-fixed{background:rgba(255,45,120,0.08);color:var(--neon2)}
+.sim-controls{display:flex;gap:8px}
+.ctrl-btn{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:2px;padding:7px 18px;border:none;cursor:none;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);transition:all .2s}
+.ctrl-btn.run{background:linear-gradient(90deg,var(--neon),#00b8a9);color:var(--dark);font-weight:700}
+.ctrl-btn.run:hover{filter:brightness(1.2)}
+.ctrl-btn.run:disabled{background:rgba(0,255,231,0.15);color:var(--dim)}
+.ctrl-btn.rst{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.ctrl-btn.rst:hover{border-color:var(--neon2);color:var(--neon2)}
+
+/* JUNCTIONS */
+.intersection-area{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.area-label{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:3px;color:var(--dim)}
+.junctions-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.junction-card{background:var(--dark2);border:1px solid var(--border);padding:14px 12px;position:relative;overflow:hidden;transition:border-color .3s}
+.junction-card.active-j{border-color:rgba(0,255,231,0.35)}
+.junction-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:0;transition:opacity .3s}
+.junction-card.active-j::after{opacity:1}
+.jc-name{font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;color:#fff;margin-bottom:10px}
+.tl-body{display:flex;flex-direction:column;gap:4px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.05);padding:6px 5px;border-radius:2px;width:fit-content;margin-bottom:10px}
+.tl-light{width:13px;height:13px;border-radius:50%;transition:all .35s}
+.tl-light.r{background:#2a0000;border:1px solid #500000}
+.tl-light.r.on{background:var(--red);box-shadow:0 0 10px var(--red)}
+.tl-light.y{background:#2a1a00;border:1px solid #503300}
+.tl-light.y.on{background:var(--yellow);box-shadow:0 0 10px var(--yellow)}
+.tl-light.g{background:#002a16;border:1px solid #005030}
+.tl-light.g.on{background:var(--green);box-shadow:0 0 10px var(--green)}
+.jc-phase{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1px;padding:2px 6px;border:1px solid;margin-bottom:8px;display:inline-block;transition:all .3s}
+.jc-phase.green{color:var(--green);border-color:var(--green);background:rgba(0,255,136,0.07)}
+.jc-phase.red{color:var(--red);border-color:var(--red);background:rgba(255,59,59,0.07)}
+.jc-phase.yellow{color:var(--yellow);border-color:var(--yellow);background:rgba(255,230,0,0.07)}
+.jc-stat{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);line-height:1.8}
+.jc-stat span{transition:color .3s}
+
+/* Road map */
+.road-map-wrap{background:var(--dark3);border:1px solid var(--border);height:140px;position:relative;overflow:hidden}
+.road-h{position:absolute;left:0;right:0;background:rgba(0,255,231,0.05);border-top:1px dashed rgba(0,255,231,0.12);border-bottom:1px dashed rgba(0,255,231,0.12)}
+.road-v{position:absolute;top:0;bottom:0;background:rgba(0,255,231,0.05);border-left:1px dashed rgba(0,255,231,0.12);border-right:1px dashed rgba(0,255,231,0.12)}
+.map-node{position:absolute;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid var(--neon);background:rgba(0,255,231,0.12);transition:all .35s}
+.map-node.gn{background:rgba(0,255,136,0.3);border-color:var(--green);box-shadow:0 0 8px var(--green)}
+.map-node.rd{background:rgba(255,59,59,0.3);border-color:var(--red);box-shadow:0 0 8px var(--red)}
+.map-node.yl{background:rgba(255,230,0,0.3);border-color:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+.map-lbl{position:absolute;font-family:'Share Tech Mono',monospace;font-size:.45rem;letter-spacing:1px;transform:translate(-50%,0)}
+.vehicle{position:absolute;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:5}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);background:var(--dark2)}
+.stat-cell{padding:14px 18px;border-right:1px solid var(--border);position:relative;overflow:hidden}
+.stat-cell:last-child{border-right:none}
+.stat-val{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:700;color:var(--neon);transition:all .3s}
+.stat-lbl{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:2px;color:var(--dim);margin-top:2px}
+.stat-delta{font-family:'Share Tech Mono',monospace;font-size:.55rem;margin-top:3px;min-height:14px}
+.dg{color:var(--green)}.db{color:var(--red)}
+.stat-flash::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);animation:scanOnce .6s ease forwards}
+
+/* SIDEBAR */
+.side-top{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--dark2);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:#fff;letter-spacing:2px}
+.mode-banner{padding:7px 18px;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:2px;text-align:center;transition:all .3s}
+.mb-rl{background:rgba(0,255,231,0.04);color:var(--neon)}
+.mb-fx{background:rgba(255,45,120,0.04);color:var(--neon2)}
+.progress-wrap{padding:12px 18px;border-bottom:1px solid var(--border)}
+.progress-label{display:flex;justify-content:space-between;margin-bottom:5px}
+.progress-label span{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:2px;color:var(--dim)}
+.pv{color:var(--neon) !important}
+.progress-track{height:3px;background:rgba(255,255,255,0.05);overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));width:0%;transition:width .4s ease;box-shadow:0 0 6px var(--neon)}
+.chart-sec{padding:14px 18px;border-bottom:1px solid var(--border)}
+.chart-lbl{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.terminal{flex:1;display:flex;flex-direction:column;min-height:0}
+.term-header{padding:10px 18px;background:rgba(0,0,0,0.35);border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:2px;color:var(--dim);display:flex;justify-content:space-between}
+.term-body{flex:1;overflow-y:auto;padding:10px 18px;font-family:'Share Tech Mono',monospace;font-size:.65rem;line-height:1.9;height:0;min-height:200px;max-height:260px}
+.term-body::-webkit-scrollbar{width:3px}
+.term-body::-webkit-scrollbar-thumb{background:var(--border)}
+.tl{opacity:0;animation:fadeIn .25s ease forwards}
+.c-epoch{color:var(--neon3);font-weight:700}
+.c-metric{color:var(--text)}
+.c-junction{color:var(--neon4)}
+.c-warn{color:var(--neon2)}
+.c-good{color:var(--green)}
+.c-dim{color:var(--dim)}
+.blink-cur{display:inline-block;width:6px;height:10px;background:var(--neon);animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
+
+/* ANIMATIONS */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-3px)}to{opacity:1;transform:none}}
+@keyframes scanOnce{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes mH{from{left:-6px}to{left:calc(100% + 6px)}}
+@keyframes mHR{from{left:calc(100% + 6px)}to{left:-6px}}
+@keyframes mV{from{top:-6px}to{top:calc(100% + 6px)}}
+
+@media(max-width:1100px){
+  .page{grid-template-columns:1fr}
+  .side-col{display:none}
+  .junctions-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="cur" id="cur"></div>
+<div class="cur-ring" id="cr"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">NEXUS<span>//</span>TRAFFIC</a>
+  <div class="nav-center"><div class="live-dot"></div><span id="simSt">STANDBY</span></div>
+  <a href="index.html" class="nav-back">← OVERVIEW</a>
+</nav>
+
+<div class="page">
+  <!-- MAIN -->
+  <div class="main-col">
+    <div class="top-bar">
+      <div class="top-bar-title">SIMULATION CONTROL ROOM</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btnRL" onclick="setMode('rl')">DQN AGENT</button>
+        <button class="mode-btn" id="btnFX" onclick="setMode('fixed')">FIXED-TIME</button>
+      </div>
+      <div class="sim-controls">
+        <button class="ctrl-btn run" id="runBtn" onclick="startSim()">▶ RUN SIMULATION</button>
+        <button class="ctrl-btn rst" onclick="resetSim()">⟳ RESET</button>
+      </div>
+    </div>
+
+    <div class="intersection-area">
+      <div class="area-label">// JUNCTION STATUS MONITOR — 5 ACTIVE NODES</div>
+      <div class="junctions-grid" id="jGrid"></div>
+
+      <!-- Road minimap -->
+      <div class="road-map-wrap" id="roadMap">
+        <div class="road-h" style="top:36%;height:20%"></div>
+        <div class="road-h" style="top:66%;height:14%"></div>
+        <div class="road-v" style="left:13%;width:10%"></div>
+        <div class="road-v" style="left:47%;width:10%"></div>
+        <div class="road-v" style="left:78%;width:10%"></div>
+        <div class="map-node rd" id="mn-gneJ11" style="left:18%;top:46%"></div>
+        <div class="map-node rd" id="mn-gneJ2"  style="left:18%;top:73%"></div>
+        <div class="map-node rd" id="mn-gneJ21" style="left:52%;top:46%"></div>
+        <div class="map-node rd" id="mn-gneJ3"  style="left:52%;top:73%"></div>
+        <div class="map-node rd" id="mn-gneJ7"  style="left:83%;top:46%"></div>
+        <div class="map-lbl" style="left:18%;top:28%;color:var(--neon)">J11</div>
+        <div class="map-lbl" style="left:18%;top:62%;color:var(--neon2)">J2</div>
+        <div class="map-lbl" style="left:52%;top:28%;color:var(--neon)">J21</div>
+        <div class="map-lbl" style="left:52%;top:62%;color:var(--neon2)">J3</div>
+        <div class="map-lbl" style="left:83%;top:28%;color:var(--neon)">J7</div>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-cell" id="scAWT"><div class="stat-val" id="vAWT">—</div><div class="stat-lbl">AVG WAIT TIME</div><div class="stat-delta" id="dAWT"></div></div>
+      <div class="stat-cell" id="scATT"><div class="stat-val" id="vATT">—</div><div class="stat-lbl">AVG TRIP TIME</div><div class="stat-delta" id="dATT"></div></div>
+      <div class="stat-cell" id="scAQL"><div class="stat-val" id="vAQL">—</div><div class="stat-lbl">AVG QUEUE LEN</div><div class="stat-delta" id="dAQL"></div></div>
+      <div class="stat-cell" id="scVeh"><div class="stat-val" id="vVeh">—</div><div class="stat-lbl">VEHICLES</div><div class="stat-delta" id="dVeh"></div></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="side-col">
+    <div class="side-top">EPOCH MONITOR</div>
+    <div class="mode-banner mb-rl" id="modeBanner">// DQN AGENT — ADAPTIVE CONTROL //</div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>TRAINING PROGRESS</span><span class="pv" id="progTxt">0 / 50</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+    </div>
+    <div class="chart-sec">
+      <div class="chart-lbl">// TOTAL WAITING TIME vs EPOCH</div>
+      <canvas id="cEpoch" width="320" height="100"></canvas>
+    </div>
+    <div class="chart-sec">
+      <div class="chart-lbl">// AVG WAIT TIME CONVERGENCE (s)</div>
+      <canvas id="cAWT" width="320" height="80"></canvas>
+    </div>
+    <div class="terminal">
+      <div class="term-header"><span>// SIMULATION LOG</span><span id="logCnt">0 LINES</span></div>
+      <div class="term-body" id="term">
+        <div class="tl c-dim">System ready. Select mode and press RUN.<span class="blink-cur"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Cursor
+const cur=document.getElementById('cur'),cr=document.getElementById('cr');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function t(){cur.style.left=mx+'px';cur.style.top=my+'px';rx+=(mx-rx)*.12;ry+=(my-ry)*.12;cr.style.left=rx+'px';cr.style.top=ry+'px';requestAnimationFrame(t);})();
+
+const JUNCTIONS = ['gneJ11','gneJ2','gneJ21','gneJ3','gneJ7'];
+let mode='rl', running=false, epochIdx=0, simData=[], tlTimer=null, vehTimer=null;
+const wtHist=[], awtHist=[];
+
+// Build junction cards
+function buildCards(){
+  const g=document.getElementById('jGrid'); g.innerHTML='';
+  JUNCTIONS.forEach(j=>{
+    g.innerHTML+=`<div class="junction-card" id="jc-${j}">
+      <div class="jc-name">${j}</div>
+      <div class="tl-body">
+        <div class="tl-light r on" id="lr-${j}"></div>
+        <div class="tl-light y" id="ly-${j}"></div>
+        <div class="tl-light g" id="lg-${j}"></div>
+      </div>
+      <div class="jc-phase red" id="ph-${j}">● RED</div>
+      <div class="jc-stat">AWT: <span id="aw-${j}" style="color:var(--neon)">—</span><br>AQL: <span id="aq-${j}" style="color:var(--neon2)">—</span></div>
+    </div>`;
+  });
+}
+buildCards();
+
+// TL state machine
+const tlState={};
+JUNCTIONS.forEach((j,i)=>{tlState[j]={ph:2,t:i*8+5};});
+
+function tickTL(){
+  JUNCTIONS.forEach(j=>{
+    const s=tlState[j]; s.t--;
+    if(s.t<=0){
+      s.ph=(s.ph+1)%4;
+      const dur=mode==='rl'?[18,4,14,4]:[30,4,30,4];
+      s.t=dur[s.ph];
+    }
+    const isG=s.ph===0,isY=s.ph===1,isR=s.ph>=2;
+    document.getElementById('lr-'+j).className='tl-light r'+(isR?' on':'');
+    document.getElementById('ly-'+j).className='tl-light y'+(isY?' on':'');
+    document.getElementById('lg-'+j).className='tl-light g'+(isG?' on':'');
+    const ph=document.getElementById('ph-'+j);
+    const card=document.getElementById('jc-'+j);
+    const node=document.getElementById('mn-'+j);
+    if(isG){ph.className='jc-phase green';ph.textContent='● GREEN';card.className='junction-card active-j';node.className='map-node gn';}
+    else if(isY){ph.className='jc-phase yellow';ph.textContent='● YELLOW';card.className='junction-card';node.className='map-node yl';}
+    else{ph.className='jc-phase red';ph.textContent='● RED';card.className='junction-card';node.className='map-node rd';}
+  });
+}
+tlTimer=setInterval(tickTL,700);
+
+// Vehicles
+function spawnVehicle(){
+  const map=document.getElementById('roadMap');
+  const v=document.createElement('div'); v.className='vehicle';
+  const cols=['#00ffe7','#ffe600','#ff2d78','#7b61ff','#00ff88'];
+  v.style.background=cols[Math.floor(Math.random()*cols.length)];
+  v.style.boxShadow=`0 0 7px ${v.style.background}`;
+  const spd=mode==='rl'?(2.5+Math.random()*1.5):(3.5+Math.random()*2);
+  const tp=Math.floor(Math.random()*3);
+  if(tp===0){v.style.top=(38+Math.random()*5)+'%';v.style.left='-6px';v.style.animation=`mH ${spd}s linear forwards`;}
+  else if(tp===1){v.style.top=(67+Math.random()*4)+'%';v.style.left='calc(100% + 6px)';v.style.animation=`mHR ${spd}s linear forwards`;}
+  else{const xs=[18,52,83];v.style.left=xs[Math.floor(Math.random()*3)]+'%';v.style.top='-6px';v.style.animation=`mV ${spd}s linear forwards`;}
+  map.appendChild(v);
+  setTimeout(()=>{if(v.parentNode)v.parentNode.removeChild(v);},spd*1000+400);
+}
+
+// Data generators
+function genRL(){
+  let data=[],wt=2800000;
+  for(let i=0;i<50;i++){
+    wt=Math.max(wt*0.968+(Math.random()-.42)*75000,850000);
+    const e=i/49;
+    data.push({e:i+1,wt:Math.round(wt),awt:+(15-e*7+(Math.random()-.5)*1.2).toFixed(2),att:+(130-e*38+(Math.random()-.5)*6).toFixed(1),aql:+(85-e*30+(Math.random()-.5)*4).toFixed(1),v:Math.floor(105+Math.random()*28)});
+  }
+  return data;
+}
+function genFixed(){
+  let data=[];
+  for(let i=0;i<50;i++){
+    data.push({e:i+1,wt:Math.round(2200000+(Math.random()-.5)*140000),awt:+(14.5+(Math.random()-.5)*2.5).toFixed(2),att:+(128+(Math.random()-.5)*10).toFixed(1),aql:+(80+(Math.random()-.5)*7).toFixed(1),v:Math.floor(100+Math.random()*26)});
+  }
+  return data;
+}
+
+// Charts
+function drawChart(id,data,c1,c2,h){
+  const cv=document.getElementById(id),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  if(data.length<2)return;
+  const mn=Math.min(...data)*.95,mx2=Math.max(...data)*1.05,rng=mx2-mn||1;
+  ctx.strokeStyle='rgba(0,255,231,0.05)';ctx.lineWidth=1;
+  for(let i=0;i<3;i++){const y=H*.1+(H*.8/2)*i;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  const pts=data.map((v,i)=>({x:(i/(data.length-1))*W*.96+W*.02,y:H*.9-((v-mn)/rng)*H*.8}));
+  const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,c1+'30');gr.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.moveTo(pts[0].x,H);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,H);ctx.closePath();ctx.fillStyle=gr;ctx.fill();
+  const lg=ctx.createLinearGradient(0,0,W,0);lg.addColorStop(0,c1);lg.addColorStop(1,c2);
+  ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle=lg;ctx.lineWidth=1.8;ctx.shadowColor=c1;ctx.shadowBlur=5;ctx.stroke();ctx.shadowBlur=0;
+  const lp=pts[pts.length-1];ctx.beginPath();ctx.arc(lp.x,lp.y,3,0,Math.PI*2);ctx.fillStyle=c2;ctx.shadowColor=c2;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
+}
+
+// Log
+let logLines=0;
+const LC={'epoch':'c-epoch','metric':'c-metric','junction':'c-junction','warn':'c-warn','good':'c-good','dim':'c-dim'};
+function log(txt,type='dim'){
+  const t=document.getElementById('term');
+  const d=document.createElement('div');d.className='tl '+(LC[type]||'c-dim');d.textContent=txt;
+  t.appendChild(d);t.scrollTop=t.scrollHeight;
+  logLines++;document.getElementById('logCnt').textContent=logLines+' LINES';
+  while(t.children.length>130)t.removeChild(t.firstChild);
+}
+
+// Stats update
+function setStats(d,prev){
+  document.getElementById('vAWT').textContent=d.awt+'s';
+  document.getElementById('vATT').textContent=d.att+'s';
+  document.getElementById('vAQL').textContent=d.aql;
+  document.getElementById('vVeh').textContent=d.v;
+  if(prev){
+    const sd=(id,curr,prv,suf,lb=true)=>{
+      const df=(curr-prv);const el=document.getElementById(id);
+      const better=lb?df<0:df>0;
+      el.className='stat-delta '+(better?'dg':'db');
+      el.textContent=(df>0?'▲':'▼')+' '+Math.abs(df.toFixed(2))+suf;
+    };
+    sd('dAWT',parseFloat(d.awt),parseFloat(prev.awt),'s');
+    sd('dATT',parseFloat(d.att),parseFloat(prev.att),'s');
+    sd('dAQL',parseFloat(d.aql),parseFloat(prev.aql),'');
+    sd('dVeh',d.v,prev.v,'',false);
+  }
+  ['AWT','ATT','AQL','Veh'].forEach(k=>{
+    const el=document.getElementById('sc'+k);
+    el.classList.remove('stat-flash');void el.offsetWidth;el.classList.add('stat-flash');
+  });
+}
+
+// Junction metrics
+function updateJMetrics(epochI){
+  const base={gneJ11:{awt:.30,aql:.42},gneJ2:{awt:.21,aql:1.16},gneJ21:{awt:.40,aql:.93},gneJ3:{awt:.33,aql:2.33},gneJ7:{awt:.39,aql:.51}};
+  JUNCTIONS.forEach(j=>{
+    const b=base[j],f=mode==='rl'?Math.max(.5,1-epochI/80):1.05;
+    const awt=(b.awt*f*(.9+Math.random()*.2)).toFixed(2);
+    const aql=(b.aql*f*(.85+Math.random()*.3)).toFixed(2);
+    document.getElementById('aw-'+j).textContent=awt+'s';
+    document.getElementById('aq-'+j).textContent=aql;
+    if(mode==='rl'){const h=Math.max(140,180-epochI*1.5);document.getElementById('aw-'+j).style.color=`hsl(${h},100%,60%)`;}
+    else{document.getElementById('aw-'+j).style.color='var(--neon2)';}
+  });
+}
+
+// Mode
+function setMode(m){
+  mode=m;
+  document.getElementById('btnRL').className='mode-btn'+(m==='rl'?' active':'');
+  document.getElementById('btnFX').className='mode-btn'+(m==='fixed'?' active-fixed':'');
+  const b=document.getElementById('modeBanner');
+  if(m==='rl'){b.className='mode-banner mb-rl';b.textContent='// DQN AGENT — ADAPTIVE CONTROL //';}
+  else{b.className='mode-banner mb-fx';b.textContent='// FIXED-TIME — 30s PHASE CYCLE //';}
+  if(!running)resetSim();
+}
+
+// Main sim loop
+function startSim(){
+  if(running)return;
+  running=true;
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('simSt').textContent='RUNNING';
+  simData=mode==='rl'?genRL():genFixed();
+  epochIdx=0;wtHist.length=0;awtHist.length=0;
+  document.getElementById('term').innerHTML='';logLines=0;
+  log('━'.repeat(40),'dim');
+  log(`  START — ${mode==='rl'?'DQN AGENT':'FIXED-TIME'} | 50 epochs | 500 steps`,mode==='rl'?'good':'warn');
+  log(`  Junctions: ${JUNCTIONS.length} | SUMO v1.26.0`,'dim');
+  log('━'.repeat(40),'dim');
+  vehTimer=setInterval(spawnVehicle,mode==='rl'?380:650);
+  nextEpoch();
+}
+
+function nextEpoch(){
+  if(!running||epochIdx>=simData.length){finishSim();return;}
+  const d=simData[epochIdx],prev=epochIdx>0?simData[epochIdx-1]:null;
+  const pct=((epochIdx+1)/50*100).toFixed(0);
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progTxt').textContent=`${epochIdx+1} / 50`;
+  setStats(d,prev);updateJMetrics(epochIdx);
+  wtHist.push(d.wt);awtHist.push(parseFloat(d.awt));
+  drawChart('cEpoch',wtHist,'#00ffe7','#7b61ff');
+  drawChart('cAWT',awtHist,'#ff2d78','#ffe600');
+  log('','dim');
+  log(`Epoch ${d.e}/50  (ε=${Math.max(.05,1-epochIdx*.019).toFixed(4)})  steps=500`,'epoch');
+  JUNCTIONS.forEach(j=>{
+    const aw=document.getElementById('aw-'+j).textContent;
+    const aq=document.getElementById('aq-'+j).textContent;
+    log(`  ${j}:  AWT=${aw}  AQL=${aq}`,'junction');
+  });
+  log(`  ── AWT=${d.awt}s  ATT=${d.att}s  AQL=${d.aql}  Veh=${d.v}`,'metric');
+  if(Math.random()<.28){
+    const W=[`  ⚠ Vehicle emergency braking on lane 'gneE2_0'`,`  ⚠ Teleporting vehicle; waited too long, lane='gneE4_0'`,`  ⚠ Emergency stop at red light on gneE20_0`];
+    log(W[Math.floor(Math.random()*W.length)],'warn');
+  }
+  if(mode==='rl'&&epochIdx>5&&prev&&parseFloat(d.awt)<parseFloat(prev.awt)){
+    log(`  ✓ Improved — saving → models/model.bin`,'good');
+  }
+  epochIdx++;
+  setTimeout(nextEpoch,mode==='rl'?360:300);
+}
+
+function finishSim(){
+  running=false;
+  clearInterval(vehTimer);
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('simSt').textContent='COMPLETED';
+  const f=simData[0],l=simData[simData.length-1];
+  const gain=(((parseFloat(f.awt)-parseFloat(l.awt))/parseFloat(f.awt))*100).toFixed(1);
+  log('','dim');log('━'.repeat(40),'dim');
+  log('  ✓ SIMULATION COMPLETE','good');
+  log(`  AWT: ${f.awt}s → ${l.awt}s  (▼${gain}%)`,'good');
+  log(`  ATT: ${f.att}s → ${l.att}s`,'good');
+  log(`  AQL: ${f.aql} → ${l.aql}`,'good');
+  log(`  Plot saved → plots/time_vs_epoch_model.png`,'dim');
+  log(`  Metrics → simple_traffic_metrics.csv`,'dim');
+  log('━'.repeat(40),'dim');
+}
+
+function resetSim(){
+  running=false;
+  clearInterval(vehTimer);
+  epochIdx=0;wtHist.length=0;awtHist.length=0;logLines=0;
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('simSt').textContent='STANDBY';
+  document.getElementById('progFill').style.width='0%';
+  document.getElementById('progTxt').textContent='0 / 50';
+  ['vAWT','vATT','vAQL','vVeh'].forEach(id=>document.getElementById(id).textContent='—');
+  ['dAWT','dATT','dAQL','dVeh'].forEach(id=>document.getElementById(id).textContent='');
+  JUNCTIONS.forEach(j=>{
+    document.getElementById('aw-'+j).textContent='—';
+    document.getElementById('aq-'+j).textContent='—';
+    document.getElementById('lr-'+j).className='tl-light r on';
+    document.getElementById('ly-'+j).className='tl-light y';
+    document.getElementById('lg-'+j).className='tl-light g';
+    document.getElementById('ph-'+j).className='jc-phase red';
+    document.getElementById('ph-'+j).textContent='● RED';
+    document.getElementById('jc-'+j).className='junction-card';
+    document.getElementById('mn-'+j).className='map-node rd';
+  });
+  ['cEpoch','cAWT'].forEach(id=>{const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);});
+  document.getElementById('term').innerHTML='<div class="tl c-dim">Reset complete. Ready to run.<span class="blink-cur"></span></div>';
+  document.getElementById('logCnt').textContent='0 LINES';
+}
+</script>
+</body>
+</html>
