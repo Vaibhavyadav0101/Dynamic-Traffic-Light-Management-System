@@ -1,0 +1,33 @@
+# ── Python cache ─────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── Virtual environment ──────────────────────────────
+venv/
+env/
+.venv/
+
+# ── Git ───────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── Generated outputs (mounted as volumes instead) ───
+models/*.bin
+plots/*.png
+results.json
+simple_traffic_metrics.csv
+tripinfo.xml
+tripinfo_fixed.xml
+
+# ── IDE ───────────────────────────────────────────────
+.vscode/
+.idea/
+
+# ── OS ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Docs (not needed in container) ──────────────────
+*.md

@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+
+  # ── Main app — interactive menu ────────────────────
+  traffic-ai:
+    build: .
+    image: nexus-traffic-ai
+    container_name: traffic-ai
+    stdin_open: true       # keeps terminal open for menu input
+    tty: true              # shows colours in terminal
+    volumes:
+      # Mount local folders so results are saved on your machine
+      - ./models:/app/models         # trained model weights saved here
+      - ./plots:/app/plots           # plots and epoch data saved here
+      - ./maps:/app/maps             # road network files (read)
+      - ./results.json:/app/results.json  # exported results (if exists)
+    ports:
+      - "8000:8000"                  # website → open localhost:8000
+    environment:
+      - SUMO_HOME=/usr/share/sumo
+      - PYTHONPATH=/usr/share/sumo/tools
+    command: python3 docker_run.py
+
+  # ── Website only — just serves the HTML ───────────
+  website:
+    build: .
+    image: nexus-traffic-ai
+    container_name: traffic-website
+    volumes:
+      - ./results.json:/app/results.json
+      - ./plots:/app/plots
+    ports:
+      - "8000:8000"
+    environment:
+      - SUMO_HOME=/usr/share/sumo
+      - PYTHONPATH=/usr/share/sumo/tools
+    command: python3 -m http.server 8000
+    profiles:
+      - website   # only runs when explicitly called
